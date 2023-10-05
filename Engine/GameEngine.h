@@ -45,6 +45,9 @@ class GameEngine
 private:
     int difficulty_ = 0;
 
+    int blackCount_ = 0;
+    int whiteCount_ = 0;
+
     ContentType playerSide_;
     ContentType oppoSide_;
 

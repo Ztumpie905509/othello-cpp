@@ -20,10 +20,12 @@ GameEngine::GameEngine(ContentType playerSide)
             if ((x == BOARD_SIZE / 2 - 1 && y == BOARD_SIZE / 2) || (x == BOARD_SIZE / 2 && y == BOARD_SIZE / 2 - 1))
             {
                 this->board_[x][y] = Board(x, y, ContentType::WHITE);
+                ++ ++this->whiteCount_;
             }
             else if ((x == BOARD_SIZE / 2 && y == BOARD_SIZE / 2) || (x == BOARD_SIZE / 2 - 1 && y == BOARD_SIZE / 2 - 1))
             {
                 this->board_[x][y] = Board(x, y, ContentType::BLACK);
+                ++ ++this->blackCount_;
             }
             else
             {
@@ -48,12 +50,6 @@ void GameEngine::printBoard() const
 
     std::cout << "Current Board:\n";
     std::cout << "\n";
-    for (int i = 0; i < 2 * BOARD_SIZE / 3; ++i)
-    {
-        std::cout << " ";
-    }
-    std::cout << hori_indent << "  " << x_axis << '\n';
-
     std::cout << "  " << hori_indent;
     for (int i = 0; i < BOARD_SIZE; ++i)
     {
@@ -77,10 +73,6 @@ void GameEngine::printBoard() const
             std::cout << this->board_[x][y].getStr() << " ";
         }
         std::cout << y << " ";
-        if (y == BOARD_SIZE / 2)
-        {
-            std::cout << y_axis << " ";
-        }
         std::cout << '\n';
     }
 
@@ -110,23 +102,8 @@ void GameEngine::printBoard() const
 
 void GameEngine::getNumberColor(int &white, int &black) const
 {
-    white = 0;
-    black = 0;
-
-    for (int x = 0; x < BOARD_SIZE; ++x)
-    {
-        for (int y = 0; y < BOARD_SIZE; ++y)
-        {
-            if (this->board_[x][y].getType() == ContentType::WHITE)
-            {
-                ++white;
-            }
-            else if (this->board_[x][y].getType() == ContentType::BLACK)
-            {
-                ++black;
-            }
-        }
-    }
+    white = this->whiteCount_;
+    black = this->blackCount_;
 }
 
 void GameEngine::printAdditionalInfo() const
@@ -160,10 +137,12 @@ void GameEngine::addPiece(int x, int y, ContentType c)
     if (c == ContentType::WHITE)
     {
         this->board_[x][y].setType(ContentType::WHITE);
+        ++this->whiteCount_;
     }
     else if (c == ContentType::BLACK)
     {
         this->board_[x][y].setType(ContentType::BLACK);
+        ++this->blackCount_;
     }
 }
 
@@ -215,9 +194,23 @@ void GameEngine::flip(FlipInfo info)
     for (const Position &pos : info.pos)
     {
         if (info.flipTo == ContentType::WHITE)
+        {
+            if (this->board_[pos.x][pos.y].getType() == ContentType::BLACK)
+            {
+                --this->blackCount_;
+            }
             this->board_[pos.x][pos.y].setType(ContentType::WHITE);
+            ++this->whiteCount_;
+        }
         else if (info.flipTo == ContentType::BLACK)
+        {
+            if (this->board_[pos.x][pos.y].getType() == ContentType::WHITE)
+            {
+                --this->whiteCount_;
+            }
             this->board_[pos.x][pos.y].setType(ContentType::BLACK);
+            ++this->blackCount_;
+        }
     }
 }
 
@@ -298,7 +291,7 @@ Position GameEngine::playerTurn()
 
 int GameEngine::alphaBetaMinimax(GameEngine &gameEngine, int depth, int alpha, int beta, bool maximizingPlayer)
 {
-    if (depth <= 0)
+    if (depth <= 0 || this->blackCount_ + this->whiteCount_ == BOARD_SIZE * BOARD_SIZE)
     {
         return evaluateBoard(gameEngine, this->oppoSide_);
     }
@@ -428,7 +421,7 @@ Position GameEngine::opponentTurn()
     }
 
     int x, y;
-    if (difficulty_ == 0 || validOpponentPositions.size() == 1)
+    if (difficulty_ == -1 || validOpponentPositions.size() == 1)
     {
         std::uniform_int_distribution<std::size_t> distribution(0, validOpponentPositions.size() - 1);
         std::mt19937 generator(std::random_device{}());
