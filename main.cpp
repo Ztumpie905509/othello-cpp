@@ -37,7 +37,7 @@ int getIntInput(const std::string &message, const std::string &errorMessage, flo
 int main()
 {
     char input = getUserInput("Welcome to othello game!\nPlease choose your side: white (w) or black (b)", "Sorry, your input is invalid.");
-    int diff = getIntInput("\nPlease enter the difficulty of the AI range from 1 to 7.\nWARNING: Computation time can be increased exponentially with repect to your input.\n\nIf you would like an Artificial Retard instead, please enter 0.", "Sorry, your input is invalid.", 0, 7);
+    int diff = getIntInput("\nPlease enter the difficulty of the AI range from 1 to 20.\nWARNING: Computation time can be increased exponentially with repect to your input.\n\nIf you would like an Artificial Retard instead, please enter 0.", "Sorry, your input is invalid.", 0, 20);
 
     GameEngine *gameEngine;
     if (input == 'w')
