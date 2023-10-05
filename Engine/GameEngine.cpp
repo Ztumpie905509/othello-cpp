@@ -20,12 +20,12 @@ GameEngine::GameEngine(ContentType playerSide)
             if ((x == BOARD_SIZE / 2 - 1 && y == BOARD_SIZE / 2) || (x == BOARD_SIZE / 2 && y == BOARD_SIZE / 2 - 1))
             {
                 this->board_[x][y] = Board(x, y, ContentType::WHITE);
-                ++ ++this->whiteCount_;
+                ++this->whiteCount_;
             }
             else if ((x == BOARD_SIZE / 2 && y == BOARD_SIZE / 2) || (x == BOARD_SIZE / 2 - 1 && y == BOARD_SIZE / 2 - 1))
             {
                 this->board_[x][y] = Board(x, y, ContentType::BLACK);
-                ++ ++this->blackCount_;
+                ++this->blackCount_;
             }
             else
             {
