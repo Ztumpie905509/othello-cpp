@@ -39,6 +39,8 @@ int main()
     char input = getUserInput("Welcome to othello game!\nPlease choose your side: white (w) or black (b)", "Sorry, your input is invalid.");
     int diff = getIntInput("\nPlease enter the difficulty of the AI range from 1 to 20.\nWARNING: Computation time can be increased exponentially with repect to your input.\n\nIf you would like an Artificial Retard instead, please enter 0.", "Sorry, your input is invalid.", 0, 20);
 
+    bool playerFirst = true;
+
     GameEngine *gameEngine;
     if (input == 'w')
     {
@@ -46,14 +48,13 @@ int main()
     }
     else
     {
+        playerFirst = false;
         gameEngine = new GameEngine(ContentType::BLACK);
     }
     gameEngine->setDiff(diff);
 
     bool stale = false;
     int staleCount = 0;
-    bool skipPlayer;
-    input == 'w' ? skipPlayer = false : skipPlayer = true;
     gameEngine->printBoard();
     gameEngine->printAdditionalInfo();
 
@@ -61,7 +62,7 @@ int main()
     {
         Position posForPrint;
 
-        if (!skipPlayer)
+        if (playerFirst)
         {
             GameOutcome progess = gameEngine->checkWin(false);
             if (progess != GameOutcome::IN_PROGRESS)
@@ -80,14 +81,13 @@ int main()
                 break;
         }
 
-        skipPlayer = false;
+        playerFirst = true;
         posForPrint = gameEngine->opponentTurn();
         if (posForPrint.x != -1 && posForPrint.y != -1)
         {
             staleCount = 0;
             std::cout << "\nThe opponent has put the piece on (" << posForPrint.x << ", " << posForPrint.y << ").\n";
             gameEngine->printBoard();
-            gameEngine->printAdditionalInfo();
         }
         else
         {

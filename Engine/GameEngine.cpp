@@ -50,6 +50,13 @@ void GameEngine::printBoard() const
 
     std::cout << "Current Board:\n";
     std::cout << "\n";
+    std::cout << '\n';
+    for (int i = 0; i < 2 * BOARD_SIZE / 3; ++i)
+    {
+        std::cout << " ";
+    }
+    std::cout << hori_indent << "  " << x_axis << '\n';
+
     std::cout << "  " << hori_indent;
     for (int i = 0; i < BOARD_SIZE; ++i)
     {
@@ -73,6 +80,10 @@ void GameEngine::printBoard() const
             std::cout << this->board_[x][y].getStr() << " ";
         }
         std::cout << y << " ";
+        if (y == BOARD_SIZE / 2)
+        {
+            std::cout << y_axis << " ";
+        }
         std::cout << '\n';
     }
 
@@ -250,6 +261,8 @@ Position GameEngine::playerTurn()
         return {-1, -1};
     }
 
+    this->printAdditionalInfo();
+
     std::cout << "Your valid positions:\n";
     for (size_t i = 0; i < validPlayerPositions.size(); ++i)
     {
@@ -425,7 +438,7 @@ Position GameEngine::opponentTurn()
     }
 
     int x, y;
-    if (difficulty_ == -1 || validOpponentPositions.size() == 1)
+    if (difficulty_ == -1 || validOpponentPositions.size() == 1 || this->blackCount_ + this->whiteCount_ == 4)
     {
         std::uniform_int_distribution<std::size_t> distribution(0, validOpponentPositions.size() - 1);
         std::mt19937 generator(std::random_device{}());
