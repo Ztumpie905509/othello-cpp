@@ -134,6 +134,10 @@ void GameEngine::setDiff(int d)
 
 void GameEngine::addPiece(int x, int y, ContentType c)
 {
+    if (x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE)
+    {
+        return;
+    }
     if (c == ContentType::WHITE)
     {
         this->board_[x][y].setType(ContentType::WHITE);
@@ -477,7 +481,7 @@ Position GameEngine::opponentTurn()
             FlipInfo flipInfo = boardCopy.getFlipArray(move.x, move.y, this->oppoSide_);
             boardCopy.flip(flipInfo);
 
-            int score = alphaBetaMinimax(boardCopy, depth, alpha, beta, true);
+            int score = alphaBetaMinimax(boardCopy, depth, alpha, beta, false);
 
             if (score > bestScore)
             {
