@@ -1,3 +1,5 @@
+// Reference: https://courses.cs.washington.edu/courses/cse573/04au/Project/mini1/RUSSIA/Final_Paper.pdf
+
 #include <iostream>
 #include <limits>
 
@@ -83,6 +85,7 @@ int main()
 
         playerFirst = true;
         posForPrint = gameEngine->opponentTurn();
+
         if (posForPrint.x != -1 && posForPrint.y != -1)
         {
             staleCount = 0;
@@ -106,17 +109,17 @@ int main()
     GameOutcome result = gameEngine->checkWin(stale);
     gameEngine->printBoard();
 
-    if (result == GameOutcome::WHITE_WIN && gameEngine->getPlayerSide() == ContentType::WHITE)
+    if (result == GameOutcome::DRAW)
+    {
+        std::cout << "It is a draw.\n\n\n";
+    }
+    else if (result == GameOutcome::WHITE_WIN && gameEngine->getPlayerSide() == ContentType::WHITE)
     {
         std::cout << "You win.\n\n\n";
     }
     else if (result == GameOutcome::BLACK_WIN && gameEngine->getPlayerSide() == ContentType::BLACK)
     {
         std::cout << "You win.\n\n\n";
-    }
-    else if (result == GameOutcome::DRAW)
-    {
-        std::cout << "It is a draw.\n\n\n";
     }
     else
     {

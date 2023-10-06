@@ -161,7 +161,7 @@ void GameEngine::addPiece(int x, int y, ContentType c)
     }
 }
 
-FlipInfo GameEngine::getFlipArray(int x, int y, ContentType myType)
+FlipInfo GameEngine::getFlipArray(const GameEngine &gameEngine, int x, int y, ContentType myType)
 {
     FlipInfo info;
     info.flipTo = myType;
@@ -179,13 +179,13 @@ FlipInfo GameEngine::getFlipArray(int x, int y, ContentType myType)
              cur_x >= 0 && cur_x < BOARD_SIZE && cur_y >= 0 && cur_y < BOARD_SIZE;
              cur_x += dir.x, cur_y += dir.y)
         {
-            if (this->board_[cur_x][cur_y].getType() == ContentType::EMPTY)
+            if (gameEngine.board_[cur_x][cur_y].getType() == ContentType::EMPTY)
             {
                 valid = false;
                 break;
             }
 
-            if (this->board_[cur_x][cur_y].getType() == myType)
+            if (gameEngine.board_[cur_x][cur_y].getType() == myType)
             {
                 valid = true;
                 break;
@@ -229,7 +229,7 @@ void GameEngine::flip(FlipInfo info)
     }
 }
 
-Position GameEngine::playerTurn()
+std::vector<Position> GameEngine::getAvaliableMove(const GameEngine &gameEngine, ContentType side)
 {
     int x, y;
     FlipInfo info;
@@ -237,15 +237,14 @@ Position GameEngine::playerTurn()
     std::vector<Position> validPlayerPositions;
     validPlayerPositions.reserve(BOARD_SIZE * BOARD_SIZE);
 
-    // Find all valid player positions
     for (x = 0; x < BOARD_SIZE; ++x)
     {
         for (y = 0; y < BOARD_SIZE; ++y)
         {
-            if (this->board_[x][y].getType() == ContentType::EMPTY)
+            if (gameEngine.board_[x][y].getType() == ContentType::EMPTY)
             {
-                info = getFlipArray(x, y, this->getPlayerSide());
-                if (!info.pos.empty())
+                info = gameEngine.getFlipArray(gameEngine, x, y, side);
+                if (info.pos.size() != 0)
                 {
                     validPlayerPositions.push_back({x, y});
                 }
@@ -253,7 +252,17 @@ Position GameEngine::playerTurn()
         }
     }
 
-    if (validPlayerPositions.empty())
+    return validPlayerPositions;
+}
+
+Position GameEngine::playerTurn()
+{
+    int x, y;
+    FlipInfo info;
+
+    std::vector<Position> validPlayerPositions = this->getAvaliableMove(*this, this->playerSide_);
+
+    if (validPlayerPositions.size() == 0)
     {
         std::cout << "You do not have a valid position to place a piece. Skipping your turn...\n";
         this->printBoard();
@@ -272,9 +281,16 @@ Position GameEngine::playerTurn()
             std::cout << "\n";
         }
     }
-
     std::cout << "\n\n"
               << "Your input: ";
+
+    auto first = validPlayerPositions.begin();
+
+#ifdef DEBUG
+    x = first->x;
+    y = first->y;
+
+#else
 
     while (true)
     {
@@ -298,8 +314,9 @@ Position GameEngine::playerTurn()
             std::cout << "Invalid position. Please enter again: ";
         }
     }
+#endif
 
-    info = getFlipArray(x, y, this->getPlayerSide());
+    info = getFlipArray(*this, x, y, this->getPlayerSide());
     addPiece(x, y, this->getPlayerSide());
     flip(info);
 
@@ -317,31 +334,14 @@ int GameEngine::alphaBetaMinimax(GameEngine &gameEngine, int depth, int alpha, i
     {
         int maxScore = std::numeric_limits<int>::min();
 
-        std::vector<Position> validPlayerPositions;
-        validPlayerPositions.reserve(BOARD_SIZE * BOARD_SIZE);
-
-        // Find all valid player positions
-        for (int x = 0; x < BOARD_SIZE; ++x)
-        {
-            for (int y = 0; y < BOARD_SIZE; ++y)
-            {
-                if (gameEngine.board_[x][y].getType() == ContentType::EMPTY)
-                {
-                    FlipInfo info = gameEngine.getFlipArray(x, y, this->getPlayerSide());
-                    if (!info.pos.empty())
-                    {
-                        validPlayerPositions.push_back({x, y});
-                    }
-                }
-            }
-        }
+        std::vector<Position> validPlayerPositions = gameEngine.getAvaliableMove(gameEngine, gameEngine.playerSide_);
 
         for (const Position &move : validPlayerPositions)
         {
             GameEngine boardCopy(gameEngine);
 
             boardCopy.addPiece(move.x, move.y, gameEngine.getPlayerSide());
-            FlipInfo flipInfo = boardCopy.getFlipArray(move.x, move.y, gameEngine.getPlayerSide());
+            FlipInfo flipInfo = boardCopy.getFlipArray(gameEngine, move.x, move.y, gameEngine.getPlayerSide());
             boardCopy.flip(flipInfo);
 
             int score = alphaBetaMinimax(boardCopy, depth - 1, alpha, beta, false);
@@ -365,31 +365,14 @@ int GameEngine::alphaBetaMinimax(GameEngine &gameEngine, int depth, int alpha, i
     {
         int minScore = std::numeric_limits<int>::max();
 
-        std::vector<Position> validOpponentPositions;
-        validOpponentPositions.reserve(BOARD_SIZE * BOARD_SIZE);
-
-        // Find all valid opponent positions
-        for (int x = 0; x < BOARD_SIZE; ++x)
-        {
-            for (int y = 0; y < BOARD_SIZE; ++y)
-            {
-                if (gameEngine.board_[x][y].getType() == ContentType::EMPTY)
-                {
-                    FlipInfo info = gameEngine.getFlipArray(x, y, gameEngine.oppoSide_);
-                    if (!info.pos.empty())
-                    {
-                        validOpponentPositions.push_back({x, y});
-                    }
-                }
-            }
-        }
+        std::vector<Position> validOpponentPositions = getAvaliableMove(gameEngine, gameEngine.oppoSide_);
 
         for (const Position &move : validOpponentPositions)
         {
             GameEngine boardCopy(gameEngine);
 
             boardCopy.addPiece(move.x, move.y, gameEngine.oppoSide_);
-            FlipInfo flipInfo = boardCopy.getFlipArray(move.x, move.y, gameEngine.oppoSide_);
+            FlipInfo flipInfo = boardCopy.getFlipArray(gameEngine, move.x, move.y, gameEngine.oppoSide_);
             boardCopy.flip(flipInfo);
 
             int score = alphaBetaMinimax(boardCopy, depth - 1, alpha, beta, true);
@@ -413,25 +396,21 @@ int GameEngine::alphaBetaMinimax(GameEngine &gameEngine, int depth, int alpha, i
 
 Position GameEngine::opponentTurn()
 {
-    std::vector<Position> validOpponentPositions;
+    std::vector<Position> validOpponentPositions = this->getAvaliableMove(*this, this->oppoSide_);
 
-    // Find all valid opponent positions
-    for (int x = 0; x < BOARD_SIZE; ++x)
+#ifdef DEBUG
+    std::cout << validOpponentPositions.size() << " Opponent valid positions:\n";
+    for (size_t i = 0; i < validOpponentPositions.size(); ++i)
     {
-        for (int y = 0; y < BOARD_SIZE; ++y)
+        std::cout << validOpponentPositions[i].x << " " << validOpponentPositions[i].y << " | ";
+        if ((i + 1) % 5 == 0)
         {
-            if (this->board_[x][y].getType() == ContentType::EMPTY)
-            {
-                FlipInfo flipInfo = getFlipArray(x, y, this->oppoSide_);
-                if (!flipInfo.pos.empty())
-                {
-                    validOpponentPositions.push_back({x, y});
-                }
-            }
+            std::cout << "\n";
         }
     }
+#endif
 
-    if (validOpponentPositions.empty())
+    if (validOpponentPositions.size() == 0)
     {
         std::cout << "The opponent does not have a valid position to place a piece. Skipping opponent's turn...\n";
         return {-1, -1};
@@ -446,7 +425,7 @@ Position GameEngine::opponentTurn()
         x = validOpponentPositions[number].x;
         y = validOpponentPositions[number].y;
 
-        FlipInfo flipInfo = getFlipArray(x, y, this->oppoSide_);
+        FlipInfo flipInfo = getFlipArray(*this, x, y, this->oppoSide_);
         addPiece(x, y, this->oppoSide_);
         flip(flipInfo);
 
@@ -458,31 +437,6 @@ Position GameEngine::opponentTurn()
         int beta = std::numeric_limits<int>::max();
         int depth = this->difficulty_;
 
-        std::vector<Position> validOpponentPositions;
-        validOpponentPositions.reserve(BOARD_SIZE * BOARD_SIZE);
-
-        // Find all valid opponent positions
-        for (int x = 0; x < BOARD_SIZE; ++x)
-        {
-            for (int y = 0; y < BOARD_SIZE; ++y)
-            {
-                if (board_[x][y].getType() == ContentType::EMPTY)
-                {
-                    FlipInfo info = getFlipArray(x, y, oppoSide_);
-                    if (!info.pos.empty())
-                    {
-                        validOpponentPositions.push_back({x, y});
-                    }
-                }
-            }
-        }
-
-        if (validOpponentPositions.empty())
-        {
-            std::cout << "Opponent does not have a valid position to place a piece. Skipping their turn...\n";
-            return {-1, -1};
-        }
-
         int bestScore = std::numeric_limits<int>::min();
         Position bestMove = {-1, -1};
 
@@ -491,7 +445,7 @@ Position GameEngine::opponentTurn()
             GameEngine boardCopy(*this);
 
             boardCopy.addPiece(move.x, move.y, this->oppoSide_);
-            FlipInfo flipInfo = boardCopy.getFlipArray(move.x, move.y, this->oppoSide_);
+            FlipInfo flipInfo = boardCopy.getFlipArray(*this, move.x, move.y, this->oppoSide_);
             boardCopy.flip(flipInfo);
 
             int score = alphaBetaMinimax(boardCopy, depth, alpha, beta, false);
@@ -503,16 +457,21 @@ Position GameEngine::opponentTurn()
             }
         }
 
-        FlipInfo flipInfo = getFlipArray(bestMove.x, bestMove.y, this->oppoSide_);
+        FlipInfo flipInfo = getFlipArray(*this, bestMove.x, bestMove.y, this->oppoSide_);
         addPiece(bestMove.x, bestMove.y, this->oppoSide_);
         flip(flipInfo);
+
+#ifdef DEBUG
+        std::cout << "\nBest move " << bestMove.x << " " << bestMove.y << '\n';
+#endif
+
         return bestMove;
     }
 }
 
 int GameEngine::evaluateBoard(const GameEngine &gameEngine, ContentType evalSide)
 {
-    int score = 0;
+    int whiteScore = 0, blackScore = 0, score = 0;
     for (int i = 0; i < BOARD_SIZE; ++i)
     {
         for (int j = 0; j < BOARD_SIZE; ++j)
@@ -520,16 +479,22 @@ int GameEngine::evaluateBoard(const GameEngine &gameEngine, ContentType evalSide
             if (gameEngine.getBoard({i, j}) == ContentType::EMPTY)
                 continue;
 
-            if (gameEngine.getBoard({i, j}) == evalSide)
+            if (gameEngine.getBoard({i, j}) == ContentType::BLACK)
             {
-                score += TILE_WEIGHTS[i][j];
+                blackScore += TILE_WEIGHTS[i][j];
             }
             else
             {
-                score -= TILE_WEIGHTS[i][j];
+                whiteScore += TILE_WEIGHTS[i][j];
             }
         }
     }
+
+    if (evalSide == ContentType::WHITE)
+        score = whiteScore - blackScore;
+    else
+        score = blackScore - whiteScore;
+
     return score;
 }
 
@@ -540,12 +505,14 @@ GameOutcome GameEngine::checkWin(bool stale) const
 
     if (stale)
     {
-        if (white > black)
+        if (white == black)
+            return GameOutcome::DRAW;
+        else if (white > black)
             return GameOutcome::WHITE_WIN;
         else if (black > white)
             return GameOutcome::BLACK_WIN;
         else
-            return GameOutcome::DRAW;
+            return GameOutcome::IN_PROGRESS;
     }
     else
     {

@@ -8,14 +8,15 @@
 
 constexpr int BOARD_SIZE = 8;
 constexpr int TILE_WEIGHTS[BOARD_SIZE][BOARD_SIZE] = {
-    {100, -25, 10, 5, 5, 10, -25, 100},
-    {-25, -50, 1, 1, 1, 1, -50, -25},
-    {10, 1, 3, 2, 2, 3, 1, 10},
-    {5, 1, 2, 1, 1, 2, 1, 5},
-    {5, 1, 2, 1, 1, 2, 1, 5},
-    {10, 1, 3, 2, 2, 3, 1, 10},
-    {-25, -50, 1, 1, 1, 1, -50, -25},
-    {100, -25, 10, 5, 5, 10, -25, 100}};
+    {4, -3, 2, 2, 2, 2, -3, 4},
+    {-3, -4, -1, -1, -1, -1, -4, -3},
+    {2, -1, 1, 0, 0, 1, -1, 2},
+    {2, -1, 0, 1, 1, 0, -1, 2},
+    {2, -1, 0, 1, 1, 0, -1, 2},
+    {2, -1, 1, 0, 0, 1, -1, 2},
+    {-3, -4, -1, -1, -1, -1, -4, -3},
+    {4, -3, 2, 2, 2, 2, -3, 4},
+};
 
 enum class GameOutcome
 {
@@ -69,8 +70,10 @@ public:
     void getNumberColor(int &white, int &black) const;
 
     void addPiece(int x, int y, ContentType);
-    FlipInfo getFlipArray(int x, int y, ContentType);
     void flip(FlipInfo);
+
+    static FlipInfo getFlipArray(const GameEngine &, int x, int y, ContentType);
+    static std::vector<Position> getAvaliableMove(const GameEngine &, ContentType);
 
     static int evaluateBoard(const GameEngine &gameEngine, ContentType evalSide);
     int alphaBetaMinimax(GameEngine &gameEngine, int depth, int alpha, int beta, bool maximizingPlayer);

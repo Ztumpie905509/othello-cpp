@@ -6,8 +6,9 @@ EXE = main
 .PHONY: all
 all: $(EXE) 
 
+debug: CPPFLAGS += -fsanitize=leak -g -DDEBUG
 debug: $(OBJS)
-	g++ $(CPPFLAGS) -fsanitize=leak -g -Wall -pedantic -Wextra -o $(EXE) $(OBJS)
+	g++ $(CPPFLAGS) -o $(EXE) $(OBJS)
 
 $(EXE): $(OBJS)
 	g++ $(CPPFLAGS) -o $@ $(OBJS)
