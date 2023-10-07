@@ -26,7 +26,7 @@ int getIntInput(const std::string &message, const std::string &errorMessage, flo
     int input;
     std::cout << message << std::endl;
     std::cout << prompt;
-    while (!(std::cin >> input) || !(input >= min && input <= max))
+    while (!(std::cin >> input) || !(input >= min && input <= max) || input == 0)
     {
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -39,7 +39,7 @@ int getIntInput(const std::string &message, const std::string &errorMessage, flo
 int main()
 {
     char input = getUserInput("Welcome to othello game!\nPlease choose your side: white (w) or black (b)", "Sorry, your input is invalid.");
-    int diff = getIntInput("\nPlease enter the difficulty of the AI range from 1 to 20.\n\nWARNING: Computation time can be increased exponentially with repect to your input.\nWARNING: A reasonable balance between difficulty and efficiency is around level 5-7.\n\nIf you would like an Artificial Retard instead, please enter 0.", "Sorry, your input is invalid.", 0, 20);
+    int diff = getIntInput("\nPlease enter the difficulty of the AI range from 1 to 20.\n\nWARNING: Computation time can be increased exponentially with repect to your input.\nWARNING: A reasonable balance between difficulty and efficiency is around level 7-10.\n\nIf you would like an Artificial Retard instead, please enter -1.", "Sorry, your input is invalid.", -1, 20);
 
     bool playerFirst = true;
 
@@ -107,7 +107,6 @@ int main()
     }
 
     GameOutcome result = gameEngine->checkWin(stale);
-    gameEngine->printBoard();
 
     if (result == GameOutcome::DRAW)
     {

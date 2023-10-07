@@ -289,7 +289,6 @@ Position GameEngine::playerTurn()
 #ifdef DEBUG
     x = first->x;
     y = first->y;
-
 #else
 
     while (true)
@@ -433,27 +432,31 @@ Position GameEngine::opponentTurn()
     }
     else
     {
+        int maxDepth = this->difficulty_;
+
         int alpha = std::numeric_limits<int>::min();
         int beta = std::numeric_limits<int>::max();
-        int depth = this->difficulty_;
 
         int bestScore = std::numeric_limits<int>::min();
         Position bestMove = {-1, -1};
 
-        for (const Position &move : validOpponentPositions)
+        for (int depth = 0; depth < maxDepth; ++depth)
         {
-            GameEngine boardCopy(*this);
-
-            boardCopy.addPiece(move.x, move.y, this->oppoSide_);
-            FlipInfo flipInfo = boardCopy.getFlipArray(*this, move.x, move.y, this->oppoSide_);
-            boardCopy.flip(flipInfo);
-
-            int score = alphaBetaMinimax(boardCopy, depth, alpha, beta, false);
-
-            if (score > bestScore)
+            for (const Position &move : validOpponentPositions)
             {
-                bestScore = score;
-                bestMove = move;
+                GameEngine boardCopy(*this);
+
+                boardCopy.addPiece(move.x, move.y, this->oppoSide_);
+                FlipInfo flipInfo = boardCopy.getFlipArray(*this, move.x, move.y, this->oppoSide_);
+                boardCopy.flip(flipInfo);
+
+                int score = alphaBetaMinimax(boardCopy, depth, alpha, beta, false);
+
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestMove = move;
+                }
             }
         }
 
@@ -462,7 +465,7 @@ Position GameEngine::opponentTurn()
         flip(flipInfo);
 
 #ifdef DEBUG
-        std::cout << "\nBest move " << bestMove.x << " " << bestMove.y << '\n';
+        std::cout << "\nBest move is: " << bestMove.x << " " << bestMove.y << "\nScore: " << bestScore << '\n';
 #endif
 
         return bestMove;
