@@ -97,7 +97,7 @@ void GameEngine::printBoard() const
             {
                 if (item == Board::getChar(this->playerSide_))
                 {
-                    std::cout << printColor::CYAN;
+                    std::cout << printColor::BLUE;
                 }
                 else if (item == Board::getChar(this->oppoSide_))
                 {
@@ -106,7 +106,7 @@ void GameEngine::printBoard() const
                 std::cout << item << printColor::RESET_COLOR << " ";
             }
             else
-                std::cout << printColor::BOLD_YELLOW << item << printColor::RESET_COLOR << " ";
+                std::cout << printColor::UNDER_YELLOW << item << printColor::RESET_COLOR << " ";
         }
         std::cout << y << " ";
         if (y == BOARD_SIZE / 2)
@@ -154,15 +154,15 @@ void GameEngine::printAdditionalInfo() const
     Board empty = Board({-1, -1}, ContentType::EMPTY);
 
     if (playerSide_ == ContentType::WHITE)
-        std::cout << printColor::CYAN << white.getChar() << printColor::RESET_COLOR << " is your piece. | "
+        std::cout << printColor::BLUE << white.getChar() << printColor::RESET_COLOR << " is your piece. | "
                   << printColor::RED << black.getChar() << printColor::RESET_COLOR << " is opponent's piece.\n";
     else
-        std::cout << printColor::CYAN << black.getChar() << printColor::RESET_COLOR << " is your piece. | "
+        std::cout << printColor::BLUE << black.getChar() << printColor::RESET_COLOR << " is your piece. | "
                   << printColor::RED << white.getChar() << printColor::RESET_COLOR << " is opponent's piece.\n";
 
     std::cout << empty.getChar() << " represents empty checker.\n\n"
-              << printColor::BOLD_YELLOW << "Bold Yellow" << printColor::RESET_COLOR << " piece represents the last move.\n"
-              << printColor::YELLOW << "Yellow" << printColor::RESET_COLOR << " piece represents the flipped piece.\n\n";
+              << printColor::UNDER_YELLOW << "This" << printColor::RESET_COLOR << " piece represents the last move.\n"
+              << printColor::YELLOW << "This" << printColor::RESET_COLOR << " piece represents the flipped piece.\n\n";
 
     std::cout << printColor::GREEN << '+' << printColor::RESET_COLOR << " is your avaliable positions.\n\n";
 
