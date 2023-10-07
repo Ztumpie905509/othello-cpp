@@ -1,5 +1,5 @@
 CPPFLAGS = -std=c++17 -Ofast
-SRCS = main.cpp Engine/GameEngine.cpp 
+SRCS = main.cpp Engine/GameEngine.cpp Engine/Board.cpp
 OBJS = $(SRCS:.cpp=.o)
 EXE = main
 

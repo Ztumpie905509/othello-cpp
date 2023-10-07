@@ -11,7 +11,7 @@ class GameEngine;
 GameEngine::GameEngine(ContentType playerSide)
 {
     this->playerSide_ = playerSide;
-    this->oppoSide_ = (this->getPlayerSide() == ContentType::WHITE) ? ContentType::BLACK : ContentType::WHITE;
+    this->oppoSide_ = (this->playerSide_ == ContentType::WHITE) ? ContentType::BLACK : ContentType::WHITE;
 
     for (int x = 0; x < BOARD_SIZE; ++x)
     {
@@ -35,10 +35,9 @@ GameEngine::GameEngine(ContentType playerSide)
     }
 }
 
-ContentType GameEngine::getPlayerSide() const
-{
-    return this->playerSide_;
-}
+ContentType GameEngine::getBoard(Position pos) const { return this->board_[pos.x][pos.y].getType(); };
+
+ContentType GameEngine::getPlayerSide() const { return this->playerSide_; }
 
 void GameEngine::printBoard() const
 {
@@ -130,7 +129,7 @@ void GameEngine::printBoard() const
 
     int yourPiece, oppoPiece;
 
-    if (this->getPlayerSide() == ContentType::WHITE)
+    if (this->playerSide_ == ContentType::WHITE)
         getNumberColor(yourPiece, oppoPiece);
     else
         getNumberColor(oppoPiece, yourPiece);
@@ -381,8 +380,8 @@ Position GameEngine::playerTurn()
 
 #endif
 
-    info = getFlipArray(*this, x, y, this->getPlayerSide());
-    addPiece(x, y, this->getPlayerSide());
+    info = getFlipArray(*this, x, y, this->playerSide_);
+    addPiece(x, y, this->playerSide_);
     flip(info);
     this->valid.clear();
 
@@ -406,8 +405,8 @@ int GameEngine::alphaBetaMinimax(GameEngine &gameEngine, int depth, int alpha, i
         {
             GameEngine boardCopy(gameEngine);
 
-            boardCopy.addPiece(move.x, move.y, gameEngine.getPlayerSide());
-            FlipInfo flipInfo = boardCopy.getFlipArray(gameEngine, move.x, move.y, gameEngine.getPlayerSide());
+            boardCopy.addPiece(move.x, move.y, gameEngine.playerSide_);
+            FlipInfo flipInfo = boardCopy.getFlipArray(gameEngine, move.x, move.y, gameEngine.playerSide_);
             boardCopy.flip(flipInfo);
 
             int score = alphaBetaMinimax(boardCopy, depth - 1, alpha, beta, false);

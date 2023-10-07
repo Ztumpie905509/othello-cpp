@@ -40,47 +40,19 @@ private:
     Position pos_;
 
 public:
-    Board() : pos_({-1, -1}), type_(ContentType::EMPTY){};
-    Board(Position pos, ContentType type) : pos_(pos), type_(type) {}
+    Board();
+    Board(Position, ContentType);
 
-    void setType(ContentType newType) { this->type_ = newType; };
-    ContentType getType() const { return this->type_; }
+    void setType(ContentType);
+    ContentType getType() const;
 
-    bool operator==(const Board &other) const { return this->pos_ == other.pos_; }
-    bool operator!=(const Board &other) const { return this->pos_ != other.pos_; }
+    bool operator==(const Board &) const;
+    bool operator!=(const Board &) const;
 
-    Position getPos() const { return this->pos_; }
-    char getChar() const
-    {
-        if (this->type_ == ContentType::WHITE)
-        {
-            return 'X';
-        }
-        else if (this->type_ == ContentType::BLACK)
-        {
-            return 'O';
-        }
-        else
-        {
-            return '.';
-        }
-    }
+    Position getPos() const;
+    char getChar() const;
 
-    static char getChar(ContentType type)
-    {
-        if (type == ContentType::WHITE)
-        {
-            return 'X';
-        }
-        else if (type == ContentType::BLACK)
-        {
-            return 'O';
-        }
-        else
-        {
-            return '.';
-        }
-    }
+    static char getChar(ContentType);
 };
 
 #endif

@@ -55,7 +55,7 @@ public:
 
     ContentType getPlayerSide() const;
 
-    ContentType getBoard(Position pos) const { return this->board_[pos.x][pos.y].getType(); };
+    ContentType getBoard(Position) const;
 
     void setDiff(int);
 
@@ -70,8 +70,8 @@ public:
     static FlipInfo getFlipArray(const GameEngine &, int x, int y, ContentType);
     static std::vector<Position> getAvaliableMove(const GameEngine &, ContentType);
 
-    static int evaluateBoard(const GameEngine &gameEngine, ContentType evalSide);
-    int alphaBetaMinimax(GameEngine &gameEngine, int depth, int alpha, int beta, bool maximizingPlayer);
+    static int evaluateBoard(const GameEngine &, ContentType);
+    int alphaBetaMinimax(GameEngine &, int, int, int, bool);
 
     Position opponentTurn();
     Position playerTurn();
