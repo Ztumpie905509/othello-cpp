@@ -9,6 +9,7 @@ all: $(EXE)
 debug: CPPFLAGS += -fsanitize=leak -g -DDEBUG
 debug: $(OBJS)
 	g++ $(CPPFLAGS) -o $(EXE) $(OBJS)
+	rm -vf $(OBJS)
 	echo "w\n5" | ./$(EXE)
 
 $(EXE): $(OBJS)
