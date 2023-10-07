@@ -57,7 +57,6 @@ int main()
 
     bool stale = false;
     int staleCount = 0;
-    gameEngine->printBoard();
 
     while (true)
     {
@@ -74,7 +73,6 @@ int main()
             {
                 staleCount = 0;
                 std::cout << "You have put the piece on (" << posForPrint.x << ", " << posForPrint.y << ").\n";
-                gameEngine->printBoard();
             }
 
             progess = gameEngine->checkWin(false);
@@ -84,18 +82,17 @@ int main()
 
         playerFirst = true;
         posForPrint = gameEngine->opponentTurn();
+        std::cout << "\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
 
         if (posForPrint.x != -1 && posForPrint.y != -1)
         {
             staleCount = 0;
             std::cout << "\nThe opponent has put the piece on (" << posForPrint.x << ", " << posForPrint.y << ").\n";
-            gameEngine->printBoard();
         }
         else
         {
             ++staleCount;
             std::cout << "\nThe opponent has no where to put the piece, skipping...\n\n";
-            gameEngine->printBoard();
 
             if (staleCount >= 2)
             {
@@ -106,22 +103,23 @@ int main()
     }
 
     GameOutcome result = gameEngine->checkWin(stale);
+    gameEngine->printBoard();
 
     if (result == GameOutcome::DRAW)
     {
-        std::cout << "It is a draw.\n\n\n";
+        std::cout << "\n\nIt is a draw.\n\n\n";
     }
     else if (result == GameOutcome::WHITE_WIN && gameEngine->getPlayerSide() == ContentType::WHITE)
     {
-        std::cout << "You win.\n\n\n";
+        std::cout << "\n\nYou win.\n\n\n";
     }
     else if (result == GameOutcome::BLACK_WIN && gameEngine->getPlayerSide() == ContentType::BLACK)
     {
-        std::cout << "You win.\n\n\n";
+        std::cout << "\n\nYou win.\n\n\n";
     }
     else
     {
-        std::cout << "You lose.\n\n\n";
+        std::cout << "\n\nYou lose.\n\n\n";
     }
     delete gameEngine;
     return 0;

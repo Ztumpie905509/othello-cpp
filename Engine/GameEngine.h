@@ -47,6 +47,7 @@ private:
 
     Position lastMove;
     std::vector<Position> flipped;
+    std::vector<Position> valid;
 
 public:
     GameEngine(ContentType);
