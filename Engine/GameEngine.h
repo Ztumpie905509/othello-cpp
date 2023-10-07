@@ -26,15 +26,6 @@ enum class GameOutcome
     IN_PROGRESS
 };
 
-struct Position
-{
-    int x, y;
-    bool operator==(const Position &other) const
-    {
-        return x == other.x && y == other.y;
-    }
-};
-
 struct FlipInfo
 {
     ContentType flipTo;
@@ -53,6 +44,9 @@ private:
     ContentType oppoSide_;
 
     Board board_[BOARD_SIZE][BOARD_SIZE];
+
+    Position lastMove;
+    std::vector<Position> flipped;
 
 public:
     GameEngine(ContentType);

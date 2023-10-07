@@ -3,6 +3,15 @@
 
 #include <string>
 
+namespace printColor
+{
+    const std::string RESET_COLOR = {"\033[0m"};
+    const std::string RED = {"\033[31m"};
+    const std::string BOLD_YELLOW = {"\033[33;1m"};
+    const std::string YELLOW = {"\033[33m"};
+    const std::string CYAN = {"\033[36m"};
+}
+
 enum ContentType
 {
     EMPTY,
@@ -10,38 +19,65 @@ enum ContentType
     BLACK
 };
 
+struct Position
+{
+    int x = -1, y = -1;
+    bool operator==(const Position &other) const
+    {
+        return x == other.x && y == other.y;
+    }
+    bool operator!=(const Position &other) const
+    {
+        return x != other.x || y != other.y;
+    }
+};
+
 class Board
 {
 private:
     ContentType type_;
-    int x_;
-    int y_;
+    Position pos_;
 
 public:
-    Board() = default;
-    Board(int x, int y, ContentType type) : x_(x), y_(y), type_(type) {}
+    Board() : pos_({-1, -1}), type_(ContentType::EMPTY){};
+    Board(Position pos, ContentType type) : pos_(pos), type_(type) {}
 
     void setType(ContentType newType) { this->type_ = newType; };
     ContentType getType() const { return this->type_; }
 
-    void getPos(int &x, int &y) const
+    bool operator==(const Board &other) const { return this->pos_ == other.pos_; }
+    bool operator!=(const Board &other) const { return this->pos_ != other.pos_; }
+
+    Position getPos() const { return this->pos_; }
+    char getChar() const
     {
-        x = x_;
-        y = y_;
-    }
-    std::string getStr() const
-    {
-        if (type_ == ContentType::WHITE)
+        if (this->type_ == ContentType::WHITE)
         {
-            return "X";
+            return 'X';
         }
-        else if (type_ == ContentType::BLACK)
+        else if (this->type_ == ContentType::BLACK)
         {
-            return "O";
+            return 'O';
         }
         else
         {
-            return ".";
+            return '.';
+        }
+    }
+
+    static char getChar(ContentType type)
+    {
+        if (type == ContentType::WHITE)
+        {
+            return 'X';
+        }
+        else if (type == ContentType::BLACK)
+        {
+            return 'O';
+        }
+        else
+        {
+            return '.';
         }
     }
 };

@@ -19,17 +19,17 @@ GameEngine::GameEngine(ContentType playerSide)
         {
             if ((x == BOARD_SIZE / 2 - 1 && y == BOARD_SIZE / 2) || (x == BOARD_SIZE / 2 && y == BOARD_SIZE / 2 - 1))
             {
-                this->board_[x][y] = Board(x, y, ContentType::WHITE);
+                this->board_[x][y] = Board({x, y}, ContentType::WHITE);
                 ++this->whiteCount_;
             }
             else if ((x == BOARD_SIZE / 2 && y == BOARD_SIZE / 2) || (x == BOARD_SIZE / 2 - 1 && y == BOARD_SIZE / 2 - 1))
             {
-                this->board_[x][y] = Board(x, y, ContentType::BLACK);
+                this->board_[x][y] = Board({x, y}, ContentType::BLACK);
                 ++this->blackCount_;
             }
             else
             {
-                this->board_[x][y] = Board(x, y, ContentType::EMPTY);
+                this->board_[x][y] = Board({x, y}, ContentType::EMPTY);
             }
         }
     }
@@ -77,7 +77,29 @@ void GameEngine::printBoard() const
         std::cout << y << " ";
         for (int x = 0; x < BOARD_SIZE; ++x)
         {
-            std::cout << this->board_[x][y].getStr() << " ";
+            char item = this->board_[x][y].getChar();
+
+            std::vector<Position>::const_iterator flippedPos = std::find(this->flipped.begin(), this->flipped.end(), Position{x, y});
+            if (flippedPos != this->flipped.end())
+            {
+                std::cout << printColor::YELLOW << item << printColor::RESET_COLOR << " ";
+                continue;
+            }
+
+            if (this->lastMove != this->board_[x][y].getPos())
+            {
+                if (item == Board::getChar(this->playerSide_))
+                {
+                    std::cout << printColor::CYAN;
+                }
+                else if (item == Board::getChar(this->oppoSide_))
+                {
+                    std::cout << printColor::RED;
+                }
+                std::cout << item << printColor::RESET_COLOR << " ";
+            }
+            else
+                std::cout << printColor::BOLD_YELLOW << item << printColor::RESET_COLOR << " ";
         }
         std::cout << y << " ";
         if (y == BOARD_SIZE / 2)
@@ -120,18 +142,20 @@ void GameEngine::getNumberColor(int &white, int &black) const
 void GameEngine::printAdditionalInfo() const
 {
     std::cout << '\n';
-    Board white = Board(-1, -1, ContentType::WHITE);
-    Board black = Board(-1, -1, ContentType::BLACK);
-    Board empty = Board(-1, -1, ContentType::EMPTY);
+    Board white = Board({-1, -1}, ContentType::WHITE);
+    Board black = Board({-1, -1}, ContentType::BLACK);
+    Board empty = Board({-1, -1}, ContentType::EMPTY);
 
     if (playerSide_ == ContentType::WHITE)
-        std::cout << white.getStr() << " is your piece | "
-                  << black.getStr() << " is opponent's piece | ";
+        std::cout << printColor::CYAN << white.getChar() << printColor::RESET_COLOR << " is your piece. | "
+                  << printColor::RED << black.getChar() << printColor::RESET_COLOR << " is opponent's piece.\n";
     else
-        std::cout << black.getStr() << " is your piece | "
-                  << white.getStr() << " is opponent's piece | ";
+        std::cout << printColor::CYAN << black.getChar() << printColor::RESET_COLOR << " is your piece. | "
+                  << printColor::RED << white.getChar() << printColor::RESET_COLOR << " is opponent's piece.\n";
 
-    std::cout << empty.getStr() << " represents empty checker\n\n";
+    std::cout << empty.getChar() << " represents empty checker.\n\n"
+              << printColor::BOLD_YELLOW << "Bold Yellow" << printColor::RESET_COLOR << " piece represents the last move.\n"
+              << printColor::YELLOW << "Yellow" << printColor::RESET_COLOR << " piece represents the flipped piece.\n\n";
 
     std::cout << "Enter a coordinate to add your piece.\n"
               << "Example input:\n2 3\n"
@@ -152,11 +176,13 @@ void GameEngine::addPiece(int x, int y, ContentType c)
     if (c == ContentType::WHITE)
     {
         this->board_[x][y].setType(ContentType::WHITE);
+        this->lastMove = this->board_[x][y].getPos();
         ++this->whiteCount_;
     }
     else if (c == ContentType::BLACK)
     {
         this->board_[x][y].setType(ContentType::BLACK);
+        this->lastMove = this->board_[x][y].getPos();
         ++this->blackCount_;
     }
 }
@@ -227,6 +253,7 @@ void GameEngine::flip(FlipInfo info)
             ++this->blackCount_;
         }
     }
+    this->flipped = info.pos;
 }
 
 std::vector<Position> GameEngine::getAvaliableMove(const GameEngine &gameEngine, ContentType side)
@@ -284,11 +311,39 @@ Position GameEngine::playerTurn()
     std::cout << "\n\n"
               << "Your input: ";
 
-    auto first = validPlayerPositions.begin();
-
 #ifdef DEBUG
-    x = first->x;
-    y = first->y;
+    int maxDepth = this->difficulty_;
+
+    int alpha = std::numeric_limits<int>::min();
+    int beta = std::numeric_limits<int>::max();
+
+    int bestScore = std::numeric_limits<int>::min();
+    Position bestMove = {-1, -1};
+
+    std::shuffle(validPlayerPositions.begin(), validPlayerPositions.end(), std::mt19937(0));
+
+    for (int depth = 0; depth < maxDepth; ++depth)
+    {
+        for (const Position &move : validPlayerPositions)
+        {
+            GameEngine boardCopy(*this);
+
+            boardCopy.addPiece(move.x, move.y, this->playerSide_);
+            info = boardCopy.getFlipArray(*this, move.x, move.y, this->playerSide_);
+            boardCopy.flip(info);
+
+            int score = alphaBetaMinimax(boardCopy, depth, alpha, beta, true);
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestMove = move;
+            }
+        }
+    }
+    x = bestMove.x;
+    y = bestMove.y;
+
 #else
 
     while (true)
@@ -313,6 +368,7 @@ Position GameEngine::playerTurn()
             std::cout << "Invalid position. Please enter again: ";
         }
     }
+
 #endif
 
     info = getFlipArray(*this, x, y, this->getPlayerSide());
@@ -398,6 +454,7 @@ Position GameEngine::opponentTurn()
     std::vector<Position> validOpponentPositions = this->getAvaliableMove(*this, this->oppoSide_);
 
 #ifdef DEBUG
+
     std::cout << validOpponentPositions.size() << " Opponent valid positions:\n";
     for (size_t i = 0; i < validOpponentPositions.size(); ++i)
     {
@@ -407,6 +464,7 @@ Position GameEngine::opponentTurn()
             std::cout << "\n";
         }
     }
+
 #endif
 
     if (validOpponentPositions.size() == 0)
@@ -419,7 +477,13 @@ Position GameEngine::opponentTurn()
     if (difficulty_ == -1 || validOpponentPositions.size() == 1 || this->blackCount_ + this->whiteCount_ == 4)
     {
         std::uniform_int_distribution<std::size_t> distribution(0, validOpponentPositions.size() - 1);
+
+#ifdef DEBUG
+        std::mt19937 generator(0);
+#else
         std::mt19937 generator(std::random_device{}());
+#endif
+
         std::size_t number = distribution(generator);
         x = validOpponentPositions[number].x;
         y = validOpponentPositions[number].y;
@@ -440,6 +504,14 @@ Position GameEngine::opponentTurn()
         int bestScore = std::numeric_limits<int>::min();
         Position bestMove = {-1, -1};
 
+        FlipInfo flipInfo;
+
+#ifdef DEBUG
+        std::shuffle(validOpponentPositions.begin(), validOpponentPositions.end(), std::mt19937(0));
+#else
+        std::shuffle(validOpponentPositions.begin(), validOpponentPositions.end(), std::mt19937(std::random_device{}()));
+#endif
+
         for (int depth = 0; depth < maxDepth; ++depth)
         {
             for (const Position &move : validOpponentPositions)
@@ -447,7 +519,7 @@ Position GameEngine::opponentTurn()
                 GameEngine boardCopy(*this);
 
                 boardCopy.addPiece(move.x, move.y, this->oppoSide_);
-                FlipInfo flipInfo = boardCopy.getFlipArray(*this, move.x, move.y, this->oppoSide_);
+                flipInfo = boardCopy.getFlipArray(*this, move.x, move.y, this->oppoSide_);
                 boardCopy.flip(flipInfo);
 
                 int score = alphaBetaMinimax(boardCopy, depth, alpha, beta, false);
@@ -460,7 +532,7 @@ Position GameEngine::opponentTurn()
             }
         }
 
-        FlipInfo flipInfo = getFlipArray(*this, bestMove.x, bestMove.y, this->oppoSide_);
+        flipInfo = getFlipArray(*this, bestMove.x, bestMove.y, this->oppoSide_);
         addPiece(bestMove.x, bestMove.y, this->oppoSide_);
         flip(flipInfo);
 
