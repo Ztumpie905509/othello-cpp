@@ -58,7 +58,6 @@ int main()
     bool stale = false;
     int staleCount = 0;
     gameEngine->printBoard();
-    gameEngine->printAdditionalInfo();
 
     while (true)
     {
