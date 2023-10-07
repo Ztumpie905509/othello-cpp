@@ -1,5 +1,7 @@
 // Reference: https://courses.cs.washington.edu/courses/cse573/04au/Project/mini1/RUSSIA/Final_Paper.pdf
 
+#include <chrono>
+
 #include <iostream>
 #include <limits>
 
@@ -38,10 +40,13 @@ int getIntInput(const std::string &message, const std::string &errorMessage, flo
 
 int main()
 {
+
     char input = getUserInput("Welcome to othello game!\nPlease choose your side: white (w) or black (b)", "Sorry, your input is invalid.");
     int diff = getIntInput("\nPlease enter the difficulty of the AI range from 1 to 20.\n\nWARNING: Computation time can be increased exponentially with repect to your input.\nWARNING: A reasonable balance between difficulty and efficiency is around level 7-10.\n\nIf you would like an Artificial Retard instead, please enter -1.", "Sorry, your input is invalid.", -1, 20);
 
     bool playerFirst = true;
+
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
     GameEngine *gameEngine;
     if (input == 'w')
@@ -107,20 +112,36 @@ int main()
 
     if (result == GameOutcome::DRAW)
     {
-        std::cout << "\n\nIt is a draw.\n\n\n";
+        std::cout << "\n\nIt is a draw.\n\n";
     }
     else if (result == GameOutcome::WHITE_WIN && gameEngine->getPlayerSide() == ContentType::WHITE)
     {
-        std::cout << "\n\nYou win.\n\n\n";
+        std::cout << "\n\nYou win.\n\n";
     }
     else if (result == GameOutcome::BLACK_WIN && gameEngine->getPlayerSide() == ContentType::BLACK)
     {
-        std::cout << "\n\nYou win.\n\n\n";
+        std::cout << "\n\nYou win.\n\n";
     }
     else
     {
-        std::cout << "\n\nYou lose.\n\n\n";
+        std::cout << "\n\nYou lose.\n\n";
     }
+
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+    int64_t milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+
+    int64_t seconds = milliseconds / 1000;
+    milliseconds %= 1000;
+
+    int64_t minutes = seconds / 60;
+    seconds %= 60;
+
+    int64_t hours = minutes / 60;
+    minutes %= 60;
+
+    std::cout << "This game took: " << hours << " hours, " << minutes << " minutes, " << seconds << " seconds, " << milliseconds << " milliseconds.\n\n";
+
     delete gameEngine;
     return 0;
 }
