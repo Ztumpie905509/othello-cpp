@@ -322,13 +322,13 @@ Position GameEngine::playerTurn()
               << "Your input: ";
 
 #ifdef DEBUG
-    int maxDepth = this->difficulty_;
+    int maxDepth = this->difficulty_ / 2 + 1;
 
     int alpha = std::numeric_limits<int>::min();
     int beta = std::numeric_limits<int>::max();
 
     int bestScore = std::numeric_limits<int>::min();
-    Position bestMove = {-1, -1};
+    Position bestMove = validPlayerPositions[0];
 
     std::shuffle(validPlayerPositions.begin(), validPlayerPositions.end(), std::mt19937(0));
 
@@ -465,6 +465,7 @@ Position GameEngine::opponentTurn()
     std::vector<Position> validOpponentPositions = this->getAvaliableMove(*this, this->oppoSide_);
 
 #ifdef DEBUG
+    this->valid = validOpponentPositions;
     this->printBoard();
     std::cout << validOpponentPositions.size() << " Opponent valid positions:\n";
     for (size_t i = 0; i < validOpponentPositions.size(); ++i)
@@ -475,6 +476,8 @@ Position GameEngine::opponentTurn()
             std::cout << "\n";
         }
     }
+    this->valid.clear();
+
 #endif
 
     if (validOpponentPositions.size() == 0)
@@ -539,7 +542,6 @@ Position GameEngine::opponentTurn()
         flipInfo = getFlipArray(*this, bestMove.x, bestMove.y, this->oppoSide_);
         addPiece(bestMove.x, bestMove.y, this->oppoSide_);
         flip(flipInfo);
-        this->valid.clear();
 
 #ifdef DEBUG
         std::cout << "\nBest move is: " << bestMove.x << " " << bestMove.y << "\nScore: " << bestScore << '\n';
