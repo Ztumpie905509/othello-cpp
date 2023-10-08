@@ -314,11 +314,6 @@ void GameEngine::mcts(GameEngine gameEngine, int numSimulations, ContentType sid
             int score = evaluateBoard(simulation, side);
             if (score > 0)
                 ++winCount;
-
-            // if (outcome == GameOutcome::BLACK_WIN && playerSide_ == ContentType::BLACK)
-            //     ++winCount;
-            // else if (outcome == GameOutcome::WHITE_WIN && playerSide_ == ContentType::WHITE)
-            //     ++winCount;
         }
 
         winRates[i] = static_cast<double>(winCount) / numSimulations;
@@ -328,46 +323,6 @@ void GameEngine::mcts(GameEngine gameEngine, int numSimulations, ContentType sid
 
     std::lock_guard<std::mutex> lock(mtx);
     bestMoves.push_back(legalMoves[bestMoveIndex]);
-}
-
-Position GameEngine::mcts(GameEngine gameEngine, int numSimulations, ContentType side)
-{
-    std::vector<Position> legalMoves = gameEngine.getAvaliableMove(side);
-
-    std::vector<double> winRates(legalMoves.size(), 0.0);
-
-    for (int i = 0; i < legalMoves.size(); ++i)
-    {
-        Position move = legalMoves[i];
-        int winCount = 0;
-
-        for (int j = 0; j < numSimulations; ++j)
-        {
-            GameEngine simulation(*this);
-            FlipInfo flipPos = simulation.getFlipArray(move, side);
-            simulation.addPiece(move);
-            simulation.flip(flipPos);
-
-            GameOutcome outcome = simulation.simulateRandomGame(side);
-
-            int score = evaluateBoard(simulation, side);
-            if (score > 0)
-                ++winCount;
-
-            // if (outcome == GameOutcome::BLACK_WIN && playerSide_ == ContentType::BLACK)
-            //     ++winCount;
-            // else if (outcome == GameOutcome::WHITE_WIN && playerSide_ == ContentType::WHITE)
-            //     ++winCount;
-        }
-
-        winRates[i] = static_cast<double>(winCount) / numSimulations;
-    }
-
-    int bestMoveIndex = std::distance(winRates.begin(), std::max_element(winRates.begin(), winRates.end()));
-
-    Position bestMove = legalMoves[bestMoveIndex];
-
-    return bestMove;
 }
 
 std::vector<Position> GameEngine::getAvaliableMove(ContentType side)
