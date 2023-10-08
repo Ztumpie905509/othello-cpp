@@ -311,9 +311,14 @@ void GameEngine::mcts(GameEngine gameEngine, int numSimulations, ContentType sid
 
             GameOutcome outcome = simulation.simulateRandomGame(side);
 
-            int score = evaluateBoard(simulation, side);
-            if (score > 0)
+            if (outcome == GameOutcome::BLACK_WIN && side == ContentType::BLACK)
+            {
                 ++winCount;
+            }
+            else if (outcome == GameOutcome::WHITE_WIN && side == ContentType::WHITE)
+            {
+                ++winCount;
+            }
         }
 
         winRates[i] = static_cast<double>(winCount) / numSimulations;
