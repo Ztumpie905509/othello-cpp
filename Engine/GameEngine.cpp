@@ -1,8 +1,12 @@
 #include <algorithm>
 #include <iostream>
+#include <mutex>
 #include <string>
 #include <random>
+#include <thread>
 #include <vector>
+
+std::mutex mtx;
 
 #include "Board.h"
 #include "GameEngine.h"
@@ -261,7 +265,7 @@ void GameEngine::flip(FlipInfo info)
 
 GameOutcome GameEngine::simulateRandomGame(ContentType side)
 {
-    GameEngine simulation(*this); // Create a copy of the current game state
+    GameEngine simulation(*this);
 
     while (true)
     {
@@ -269,7 +273,6 @@ GameOutcome GameEngine::simulateRandomGame(ContentType side)
         if (legalMoves.empty())
             break;
 
-        // Randomly choose a move
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_int_distribution<> dis(0, legalMoves.size() - 1);
@@ -277,21 +280,20 @@ GameOutcome GameEngine::simulateRandomGame(ContentType side)
 
         Position randomMove = legalMoves[randomIndex];
 
-        // Make the move
         FlipInfo flipPos = simulation.getFlipArray(randomMove, side);
         simulation.addPiece(randomMove);
         simulation.flip(flipPos);
     }
 
-    return simulation.checkWin(false); // Return the outcome of the simulated game
+    return simulation.checkWin(false);
 }
 
-Position GameEngine::mcts(GameEngine gameEngine, int numSimulations, ContentType side)
+void GameEngine::mcts(GameEngine gameEngine, int numSimulations, ContentType side, std::vector<Position> &bestMoves)
 {
     std::vector<Position> legalMoves = gameEngine.getAvaliableMove(side);
 
     if (legalMoves.empty())
-        return Position(-1, -1, ContentType::EMPTY);
+        return;
 
     std::vector<double> winRates(legalMoves.size(), 0.0);
 
@@ -308,7 +310,7 @@ Position GameEngine::mcts(GameEngine gameEngine, int numSimulations, ContentType
             simulation.flip(flipPos);
 
             GameOutcome outcome = simulation.simulateRandomGame(side);
-            
+
             int score = evaluateBoard(simulation, side);
             if (score > 0)
                 ++winCount;
@@ -322,8 +324,47 @@ Position GameEngine::mcts(GameEngine gameEngine, int numSimulations, ContentType
         winRates[i] = static_cast<double>(winCount) / numSimulations;
     }
 
-    // Find the move with the highest win rate
     int bestMoveIndex = std::distance(winRates.begin(), std::max_element(winRates.begin(), winRates.end()));
+
+    std::lock_guard<std::mutex> lock(mtx);
+    bestMoves.push_back(legalMoves[bestMoveIndex]);
+}
+
+Position GameEngine::mcts(GameEngine gameEngine, int numSimulations, ContentType side)
+{
+    std::vector<Position> legalMoves = gameEngine.getAvaliableMove(side);
+
+    std::vector<double> winRates(legalMoves.size(), 0.0);
+
+    for (int i = 0; i < legalMoves.size(); ++i)
+    {
+        Position move = legalMoves[i];
+        int winCount = 0;
+
+        for (int j = 0; j < numSimulations; ++j)
+        {
+            GameEngine simulation(*this);
+            FlipInfo flipPos = simulation.getFlipArray(move, side);
+            simulation.addPiece(move);
+            simulation.flip(flipPos);
+
+            GameOutcome outcome = simulation.simulateRandomGame(side);
+
+            int score = evaluateBoard(simulation, side);
+            if (score > 0)
+                ++winCount;
+
+            // if (outcome == GameOutcome::BLACK_WIN && playerSide_ == ContentType::BLACK)
+            //     ++winCount;
+            // else if (outcome == GameOutcome::WHITE_WIN && playerSide_ == ContentType::WHITE)
+            //     ++winCount;
+        }
+
+        winRates[i] = static_cast<double>(winCount) / numSimulations;
+    }
+
+    int bestMoveIndex = std::distance(winRates.begin(), std::max_element(winRates.begin(), winRates.end()));
+
     Position bestMove = legalMoves[bestMoveIndex];
 
     return bestMove;
@@ -386,37 +427,11 @@ Position GameEngine::playerTurn()
               << "Your input: ";
 
 #ifdef DEBUG
-    int maxDepth = 5;
 
-    int alpha = std::numeric_limits<int>::min();
-    int beta = std::numeric_limits<int>::max();
+    std::shuffle(validPlayerPositions.begin(), validPlayerPositions.end(), std::mt19937(std::random_device{}()));
 
-    int bestScore = std::numeric_limits<int>::min();
-    Position bestMove = validPlayerPositions[0];
-
-    std::shuffle(validPlayerPositions.begin(), validPlayerPositions.end(), std::mt19937(0));
-
-    for (int depth = 0; depth < maxDepth; ++depth)
-    {
-        for (const Position &move : validPlayerPositions)
-        {
-            GameEngine boardCopy(*this);
-
-            boardCopy.addPiece({move.x, move.y, this->playerSide_});
-            info = boardCopy.getFlipArray({move.x, move.y, this->playerSide_}, this->playerSide_);
-            boardCopy.flip(info);
-
-            int score = alphaBetaMinimax(boardCopy, depth, alpha, beta, true);
-
-            if (score > bestScore)
-            {
-                bestScore = score;
-                bestMove = move;
-            }
-        }
-    }
-    x = bestMove.x;
-    y = bestMove.y;
+    x = validPlayerPositions[0].x;
+    y = validPlayerPositions[0].y;
 
 #else
 
@@ -574,9 +589,29 @@ Position GameEngine::opponentTurn()
     }
     else
     {
-        int depth = 100 * this->difficulty_;
+        int depth = 100 * this->difficulty_ * this->difficulty_;
 
-        Position bestMove = this->mcts(*this, depth, this->oppoSide_);
+        int numThreads = std::thread::hardware_concurrency() / 4;
+        std::vector<std::thread> threads;
+
+        std::vector<Position> bestMoves;
+        for (int i = 0; i < numThreads; ++i)
+        {
+            threads.emplace_back([=, &bestMoves]
+                                 { this->mcts(*this, depth / numThreads, this->oppoSide_, bestMoves); });
+        }
+
+        for (auto &thread : threads)
+        {
+            thread.join();
+        }
+
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis(0, bestMoves.size() - 1);
+        int randomIndex = dis(gen);
+
+        Position bestMove = bestMoves[randomIndex];
 
         flipInfo = this->getFlipArray({bestMove.x, bestMove.y, this->oppoSide_}, this->oppoSide_);
         this->addPiece({bestMove.x, bestMove.y, this->oppoSide_});

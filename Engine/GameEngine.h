@@ -67,7 +67,7 @@ public:
     void flip(FlipInfo);
 
     FlipInfo getFlipArray(Position, ContentType);
-     std::vector<Position> getAvaliableMove( ContentType);
+    std::vector<Position> getAvaliableMove(ContentType);
 
     static int evaluateBoard(const GameEngine &, ContentType);
     int alphaBetaMinimax(GameEngine &, int, int, int, bool);
@@ -75,7 +75,8 @@ public:
     Position opponentTurn();
     Position playerTurn();
 
-    Position mcts(GameEngine, int, ContentType);
+    Position mcts(GameEngine gameEngine, int numSimulations, ContentType side);
+    void mcts(GameEngine, int, ContentType, std::vector<Position> &);
     GameOutcome simulateRandomGame(ContentType);
 
     static GameOutcome checkWin(const Board &, bool);

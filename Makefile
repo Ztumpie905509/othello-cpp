@@ -1,4 +1,4 @@
-CPPFLAGS = -std=c++17 -Ofast
+CPPFLAGS = -std=c++17 -Ofast -pthread
 SRCS = main.cpp Engine/GameEngine.cpp Engine/Board.cpp
 OBJS = $(SRCS:.cpp=.o)
 EXE = main
@@ -10,7 +10,7 @@ debug: CPPFLAGS += -fsanitize=leak,address,undefined -g -DDEBUG
 debug: $(OBJS)
 	g++ $(CPPFLAGS) -o $(EXE) $(OBJS)
 	rm -vf $(OBJS)
-	echo "w\n15" | ./$(EXE)
+	echo "w\n5" | ./$(EXE)
 
 $(EXE): $(OBJS)
 	g++ $(CPPFLAGS) -o $@ $(OBJS)
