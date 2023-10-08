@@ -1,12 +1,13 @@
 #ifndef GAME_ENGINE_H
 #define GAME_ENGINE_H
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include "Board.h"
 
-constexpr int BOARD_SIZE = 8;
+extern const int BOARD_SIZE;
+
 constexpr int TILE_WEIGHTS[BOARD_SIZE][BOARD_SIZE] = {
     {4, -3, 2, 2, 2, 2, -3, 4},
     {-3, -4, -1, -1, -1, -1, -4, -3},
@@ -17,6 +18,9 @@ constexpr int TILE_WEIGHTS[BOARD_SIZE][BOARD_SIZE] = {
     {-3, -4, -1, -1, -1, -1, -4, -3},
     {4, -3, 2, 2, 2, 2, -3, 4},
 };
+
+enum class ContentType;
+class Position;
 
 enum class GameOutcome
 {
@@ -37,13 +41,10 @@ class GameEngine
 private:
     int difficulty_ = 0;
 
-    int blackCount_ = 0;
-    int whiteCount_ = 0;
-
     ContentType playerSide_;
     ContentType oppoSide_;
 
-    Board board_[BOARD_SIZE][BOARD_SIZE];
+    Board board_;
 
     Position lastMove;
     std::vector<Position> flipped;
@@ -55,20 +56,18 @@ public:
 
     ContentType getPlayerSide() const;
 
-    ContentType getBoard(Position) const;
+    ContentType getType(Position) const;
 
     void setDiff(int);
 
     void printBoard() const;
     void printAdditionalInfo() const;
 
-    void getNumberColor(int &white, int &black) const;
-
-    void addPiece(int x, int y, ContentType);
+    void addPiece(Position);
     void flip(FlipInfo);
 
-    static FlipInfo getFlipArray(const GameEngine &, int x, int y, ContentType);
-    static std::vector<Position> getAvaliableMove(const GameEngine &, ContentType);
+    FlipInfo getFlipArray(Position, ContentType);
+     std::vector<Position> getAvaliableMove( ContentType);
 
     static int evaluateBoard(const GameEngine &, ContentType);
     int alphaBetaMinimax(GameEngine &, int, int, int, bool);
@@ -76,7 +75,13 @@ public:
     Position opponentTurn();
     Position playerTurn();
 
+    Position mcts(GameEngine, int, ContentType);
+    GameOutcome simulateRandomGame(ContentType);
+
+    static GameOutcome checkWin(const Board &, bool);
     GameOutcome checkWin(bool) const;
+
+    friend Board;
 };
 
 #endif

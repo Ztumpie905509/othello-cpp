@@ -1,20 +1,24 @@
 #include <string>
 
 #include "Board.h"
+#include "GameEngine.h"
 
+class Position;
 class Board;
 
-Board::Board() : pos_({-1, -1}), type_(ContentType::EMPTY){};
-Board::Board(Position pos, ContentType type) : pos_(pos), type_(type) {}
+Position::Position(int x, int y, ContentType ctty) : x(x), y(y), type_(ctty){};
 
-void Board::setType(ContentType newType) { this->type_ = newType; };
-ContentType Board::getType() const { return this->type_; }
+void Position::update(ContentType type)
+{
+    this->type_ = type;
+};
 
-bool Board::operator==(const Board &other) const { return this->pos_ == other.pos_; }
-bool Board::operator!=(const Board &other) const { return this->pos_ != other.pos_; }
+ContentType Position::getType() const
+{
+    return this->type_;
+};
 
-Position Board::getPos() const { return this->pos_; }
-char Board::getChar() const
+char Position::getChar() const
 {
     if (this->type_ == ContentType::WHITE)
     {
@@ -28,6 +32,46 @@ char Board::getChar() const
     {
         return '.';
     }
+}
+
+int Position::getX() const
+{
+    return this->x;
+}
+
+int Position::getY() const
+{
+    return this->y;
+}
+
+bool Position::operator==(const Position &other) const
+{
+    return x == other.x && y == other.y;
+}
+bool Position::operator!=(const Position &other) const
+{
+    return x != other.x || y != other.y;
+}
+
+Board::Board()
+{
+    for (int i = 0; i < BOARD_SIZE; ++i)
+    {
+        for (int j = 0; j < BOARD_SIZE; ++j)
+        {
+            this->pos_[i][j] = Position{i, j, ContentType::EMPTY};
+        }
+    }
+}
+
+void Board::update(Position pos)
+{
+    this->pos_[pos.x][pos.y].update(pos.getType());
+};
+
+ContentType Board::getType(Position pos) const
+{
+    return this->pos_[pos.x][pos.y].getType();
 }
 
 char Board::getChar(ContentType type)
@@ -45,3 +89,11 @@ char Board::getChar(ContentType type)
         return '.';
     }
 }
+
+void Board::getNumberColor(int &white, int &black) const
+{
+    white = this->whiteCount_;
+    black = this->blackCount_;
+}
+
+char Board::getChar(Position pos) const { return this->pos_[pos.x][pos.y].getChar(); };

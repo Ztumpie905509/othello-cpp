@@ -6,7 +6,6 @@
 #include <limits>
 
 #include "Engine/GameEngine.h"
-#include "Engine/Board.h"
 
 char getUserInput(const std::string &message, const std::string &errorMessage, const std::string &prompt = "Your input: ")
 {
@@ -74,10 +73,10 @@ int main()
                 break;
 
             posForPrint = gameEngine->playerTurn();
-            if (posForPrint.x != -1 && posForPrint.y != -1)
+            if (posForPrint.getX() != -1 && posForPrint.getY() != -1)
             {
                 staleCount = 0;
-                std::cout << "You have put the piece on (" << posForPrint.x << ", " << posForPrint.y << ").\n";
+                std::cout << "You have put the piece on (" << posForPrint.getX() << ", " << posForPrint.getY() << ").\n";
             }
 
             progess = gameEngine->checkWin(false);
@@ -89,10 +88,10 @@ int main()
         posForPrint = gameEngine->opponentTurn();
         std::cout << "\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
 
-        if (posForPrint.x != -1 && posForPrint.y != -1)
+        if (posForPrint.getX() != -1 && posForPrint.getY() != -1)
         {
             staleCount = 0;
-            std::cout << "\nThe opponent has put the piece on (" << posForPrint.x << ", " << posForPrint.y << ").\n";
+            std::cout << "\nThe opponent has put the piece on (" << posForPrint.getX() << ", " << posForPrint.getY() << ").\n";
         }
         else
         {

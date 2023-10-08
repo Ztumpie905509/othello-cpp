@@ -2,6 +2,13 @@
 #define BOARD_H
 
 #include <string>
+#include <vector>
+
+const int BOARD_SIZE = 8;
+
+class Board;
+class Position;
+class GameEngine;
 
 namespace printColor
 {
@@ -13,46 +20,62 @@ namespace printColor
     const std::string BLUE = {"\033[34;1m"};
 }
 
-enum ContentType
+enum class ContentType
 {
     EMPTY,
     WHITE,
     BLACK
 };
 
-struct Position
+class Position
 {
-    int x = -1, y = -1;
-    bool operator==(const Position &other) const
-    {
-        return x == other.x && y == other.y;
-    }
-    bool operator!=(const Position &other) const
-    {
-        return x != other.x || y != other.y;
-    }
+private:
+    int x = -1,
+        y = -1;
+    ContentType type_;
+
+public:
+    Position() = default;
+    Position(int x, int y, ContentType ctty);
+    Position(const Position &) = default;
+
+    void update(ContentType);
+    ContentType getType() const;
+    char getChar() const;
+
+    int getX() const;
+    int getY() const;
+
+    bool
+    operator==(const Position &other) const;
+    bool
+    operator!=(const Position &other) const;
+
+    friend Board;
+    friend GameEngine;
 };
 
 class Board
 {
 private:
-    ContentType type_;
-    Position pos_;
+    int blackCount_ = 0;
+    int whiteCount_ = 0;
+
+    Position pos_[BOARD_SIZE][BOARD_SIZE];
 
 public:
     Board();
-    Board(Position, ContentType);
+    Board(const Board &other) = default;
 
-    void setType(ContentType);
-    ContentType getType() const;
+    void getNumberColor(int &white, int &black) const;
 
-    bool operator==(const Board &) const;
-    bool operator!=(const Board &) const;
-
-    Position getPos() const;
-    char getChar() const;
+    void update(Position);
+    ContentType getType(Position) const;
+    char getChar(Position) const;
 
     static char getChar(ContentType);
+
+    friend GameEngine;
 };
 
 #endif
