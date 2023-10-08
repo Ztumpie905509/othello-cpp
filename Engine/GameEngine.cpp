@@ -382,14 +382,38 @@ Position GameEngine::playerTurn()
               << "Your input: ";
 
 #ifdef DEBUG
+    int maxDepth = this->difficulty_ / 2 + 1;
 
-    std::shuffle(validPlayerPositions.begin(), validPlayerPositions.end(), std::mt19937(std::random_device{}()));
+    int alpha = std::numeric_limits<int>::min();
+    int beta = std::numeric_limits<int>::max();
 
-    x = validPlayerPositions[0].x;
-    y = validPlayerPositions[0].y;
+    int bestScore = std::numeric_limits<int>::min();
+    Position bestMove = validPlayerPositions[0];
 
+    std::shuffle(validPlayerPositions.begin(), validPlayerPositions.end(), std::mt19937(0));
+
+    for (int depth = 0; depth < maxDepth; ++depth)
+    {
+        for (const Position &move : validPlayerPositions)
+        {
+            GameEngine boardCopy(*this);
+
+            boardCopy.addPiece(move.x, move.y, this->playerSide_);
+            info = boardCopy.getFlipArray(*this, move.x, move.y, this->playerSide_);
+            boardCopy.flip(info);
+
+            int score = alphaBetaMinimax(boardCopy, depth, alpha, beta, true);
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestMove = move;
+            }
+        }
+    }
+    x = bestMove.x;
+    y = bestMove.y;
 #else
-
     while (true)
     {
         std::cin >> x >> y;
