@@ -22,7 +22,7 @@ char getUserInput(const std::string &message, const std::string &errorMessage, c
     return input;
 }
 
-int getIntInput(const std::string &message, const std::string &errorMessage, float min, float max, const std::string &prompt = "Your input: ")
+int getIntInput(const std::string &message, const std::string &errorMessage, int min, int max, const std::string &prompt = "Your input: ")
 {
     int input;
     std::cout << message << std::endl;
