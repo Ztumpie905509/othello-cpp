@@ -273,10 +273,10 @@ GameOutcome GameEngine::simulateRandomGame(ContentType side)
         if (legalMoves.empty())
             break;
 
-        std::random_device rd;
-        std::mt19937 gen(rd());
+        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+        std::default_random_engine generator(seed);
         std::uniform_int_distribution<> dis(0, legalMoves.size() - 1);
-        int randomIndex = dis(gen);
+        int randomIndex = dis(generator);
 
         Position randomMove = legalMoves[randomIndex];
 
@@ -558,7 +558,8 @@ Position GameEngine::opponentTurn()
 #ifdef DEBUG
         std::mt19937 generator(0);
 #else
-        std::mt19937 generator(std::random_device{}());
+        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+        std::default_random_engine generator(seed);
 #endif
 
         std::size_t number = distribution(generator);
@@ -592,11 +593,10 @@ Position GameEngine::opponentTurn()
         {
             thread.join();
         }
-
-        std::random_device rd;
-        std::mt19937 gen(rd());
+        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+        std::default_random_engine generator(seed);
         std::uniform_int_distribution<> dis(0, bestMoves.size() - 1);
-        int randomIndex = dis(gen);
+        int randomIndex = dis(generator);
 
         Position bestMove = bestMoves[randomIndex];
 
