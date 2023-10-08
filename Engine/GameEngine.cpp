@@ -398,8 +398,8 @@ Position GameEngine::playerTurn()
         {
             GameEngine boardCopy(*this);
 
-            boardCopy.addPiece(move.x, move.y, this->playerSide_);
-            info = boardCopy.getFlipArray(*this, move.x, move.y, this->playerSide_);
+            boardCopy.addPiece({move.x, move.y, this->playerSide_});
+            info = boardCopy.getFlipArray({move.x, move.y, this->playerSide_}, this->playerSide_);
             boardCopy.flip(info);
 
             int score = alphaBetaMinimax(boardCopy, depth, alpha, beta, true);
