@@ -274,7 +274,7 @@ GameOutcome GameEngine::simulateRandomGame(ContentType side)
             break;
 
         unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-        std::default_random_engine generator(seed);
+        std::mt19937 generator(seed);
         std::uniform_int_distribution<> dis(0, legalMoves.size() - 1);
         int randomIndex = dis(generator);
 
@@ -395,7 +395,10 @@ Position GameEngine::playerTurn()
     int bestScore = std::numeric_limits<int>::min();
     Position bestMove = validPlayerPositions[0];
 
-    std::shuffle(validPlayerPositions.begin(), validPlayerPositions.end(), std::mt19937(0));
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::mt19937 generator(seed);
+
+    std::shuffle(validPlayerPositions.begin(), validPlayerPositions.end(), generator);
 
     for (int depth = 0; depth < maxDepth; ++depth)
     {
@@ -555,12 +558,8 @@ Position GameEngine::opponentTurn()
     {
         std::uniform_int_distribution<std::size_t> distribution(0, validOpponentPositions.size() - 1);
 
-#ifdef DEBUG
-        std::mt19937 generator(0);
-#else
         unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-        std::default_random_engine generator(seed);
-#endif
+        std::mt19937 generator(seed);
 
         std::size_t number = distribution(generator);
         x = validOpponentPositions[number].x;
@@ -594,7 +593,7 @@ Position GameEngine::opponentTurn()
             thread.join();
         }
         unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-        std::default_random_engine generator(seed);
+        std::mt19937 generator(seed);
         std::uniform_int_distribution<> dis(0, bestMoves.size() - 1);
         int randomIndex = dis(generator);
 
