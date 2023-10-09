@@ -234,7 +234,6 @@ FlipInfo GameEngine::getFlipArray(Position pos, ContentType myType) const
         }
     }
 
-
     return info;
 }
 
@@ -262,28 +261,28 @@ void GameEngine::flip(FlipInfo info)
         }
     }
     this->flipped = info.pos;
-
 }
 
-GameOutcome GameEngine::simulateRandomGame(bool oppoSide)
+GameOutcome GameEngine::simulateRandomGame(bool oppoSide, int depth)
 {
     GameEngine simulation(*this);
     ContentType side;
+    std::vector<Position> legalMoves;
 
-    while (true)
+    for (int i = 0; i < depth; ++i)
     {
         if (oppoSide)
         {
-            // oppoSide = 0;
+            oppoSide = 0;
             side = simulation.oppoSide_;
         }
         else
         {
-            // oppoSide = 1;
+            oppoSide = 1;
             side = simulation.playerSide_;
         }
 
-        std::vector<Position> legalMoves = simulation.getAvaliableMove(side);
+        legalMoves = simulation.getAvaliableMove(side);
         if (legalMoves.empty())
             break;
 
@@ -299,8 +298,7 @@ GameOutcome GameEngine::simulateRandomGame(bool oppoSide)
         simulation.flip(flipPos);
     }
 
-    bool stale = !(simulation.board_.whiteCount_ + simulation.board_.blackCount_ == BOARD_SIZE * BOARD_SIZE);
-    return simulation.checkWin(stale);
+    return simulation.checkWin(false);
 }
 
 void GameEngine::mcts(GameEngine gameEngine, int numSimulations, bool oppoSide, std::vector<Position> &bestMoves)
@@ -333,7 +331,7 @@ void GameEngine::mcts(GameEngine gameEngine, int numSimulations, bool oppoSide, 
             simulation.addPiece(move);
             simulation.flip(flipPos);
 
-            GameOutcome outcome = simulation.simulateRandomGame(oppoSide);
+            GameOutcome outcome = simulation.simulateRandomGame(oppoSide, 3 * TOTAL_SIZE / 4);
 
             if (outcome == GameOutcome::BLACK_WIN && side == ContentType::BLACK)
             {
@@ -360,7 +358,7 @@ std::vector<Position> GameEngine::getAvaliableMove(ContentType side) const
     FlipInfo info;
 
     std::vector<Position> validPlayerPositions;
-    validPlayerPositions.reserve(BOARD_SIZE * BOARD_SIZE);
+    validPlayerPositions.reserve(TOTAL_SIZE);
 
     for (x = 0; x < BOARD_SIZE; ++x)
     {
@@ -411,7 +409,7 @@ Position GameEngine::playerTurn()
               << "Your input: ";
 
 #ifdef DEBUG
-    int maxDepth = 1;
+    int maxDepth = 5;
 
     int alpha = std::numeric_limits<int>::min();
     int beta = std::numeric_limits<int>::max();
@@ -481,7 +479,7 @@ Position GameEngine::playerTurn()
 
 int GameEngine::alphaBetaMinimax(GameEngine &gameEngine, int depth, int alpha, int beta, bool maximizingPlayer)
 {
-    if (depth <= 0 || this->board_.blackCount_ + this->board_.whiteCount_ == BOARD_SIZE * BOARD_SIZE)
+    if (depth <= 0 || this->board_.blackCount_ + this->board_.whiteCount_ == TOTAL_SIZE)
     {
         return evaluateBoard(gameEngine, this->oppoSide_);
     }
@@ -599,7 +597,7 @@ Position GameEngine::opponentTurn()
     {
         Position bestMove;
 
-        int depth = this->difficulty_ * this->difficulty_ * 50;
+        int depth = this->difficulty_ * this->difficulty_ * 2;
 
         int numThreads = std::thread::hardware_concurrency() / 4;
         if (!numThreads)
@@ -680,11 +678,11 @@ GameOutcome GameEngine::checkWin(bool stale) const
     }
     else
     {
-        if (black == 0 || (white + black == BOARD_SIZE * BOARD_SIZE && white > black))
+        if (black == 0 || (white + black == TOTAL_SIZE && white > black))
             return GameOutcome::WHITE_WIN;
-        else if (white == 0 || (white + black == BOARD_SIZE * BOARD_SIZE && white < black))
+        else if (white == 0 || (white + black == TOTAL_SIZE && white < black))
             return GameOutcome::BLACK_WIN;
-        else if (white + black == BOARD_SIZE * BOARD_SIZE && white == black)
+        else if (white + black == TOTAL_SIZE && white == black)
             return GameOutcome::DRAW;
         else
             return GameOutcome::IN_PROGRESS;

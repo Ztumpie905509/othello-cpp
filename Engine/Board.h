@@ -5,6 +5,7 @@
 #include <vector>
 
 const int BOARD_SIZE = 8;
+const int TOTAL_SIZE = 64;
 
 class Board;
 class Position;

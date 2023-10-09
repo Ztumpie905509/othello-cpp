@@ -8,6 +8,7 @@
 #include "Board.h"
 
 extern const int BOARD_SIZE;
+extern const int TOTAL_SIZE;
 
 constexpr int TILE_WEIGHTS[BOARD_SIZE][BOARD_SIZE] = {
     {4, -3, 2, 2, 2, 2, -3, 4},
@@ -65,7 +66,7 @@ private:
     int alphaBetaMinimax(GameEngine &, int, int, int, bool);
 
     void mcts(GameEngine, int, bool, std::vector<Position> &);
-    GameOutcome simulateRandomGame(bool);
+    GameOutcome simulateRandomGame(bool, int depth);
 
 public:
     GameEngine() = default;
