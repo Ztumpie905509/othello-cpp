@@ -194,7 +194,7 @@ void GameEngine::addPiece(Position pos)
     }
 }
 
-FlipInfo GameEngine::getFlipArray(Position pos, ContentType myType)
+FlipInfo GameEngine::getFlipArray(Position pos, ContentType myType) const
 {
     FlipInfo info;
     info.flipTo = myType;
@@ -330,7 +330,7 @@ void GameEngine::mcts(GameEngine gameEngine, int numSimulations, ContentType sid
     bestMoves.push_back(legalMoves[bestMoveIndex]);
 }
 
-std::vector<Position> GameEngine::getAvaliableMove(ContentType side)
+std::vector<Position> GameEngine::getAvaliableMove(ContentType side) const
 {
     int x, y;
     FlipInfo info;
