@@ -51,8 +51,6 @@ private:
     std::vector<Position> flipped;
     std::vector<Position> valid;
 
-    std::unordered_map<int, FlipInfo> mutable flipCache;
-
     ContentType getType(Position) const;
 
     void printAdditionalInfo() const;

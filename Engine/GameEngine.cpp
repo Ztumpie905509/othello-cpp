@@ -192,20 +192,10 @@ void GameEngine::addPiece(Position pos)
         this->lastMove = this->board_.pos_[pos.x][pos.y];
         ++this->board_.blackCount_;
     }
-    this->flipCache.clear();
 }
 
 FlipInfo GameEngine::getFlipArray(Position pos, ContentType myType) const
 {
-    int posHash = pos.x * BOARD_SIZE + pos.y;
-
-    // Check if the flip positions are already calculated for this position
-    auto cacheIter = flipCache.find(posHash);
-    if (cacheIter != flipCache.end())
-    {
-        return cacheIter->second;
-    }
-
     FlipInfo info;
     info.flipTo = myType;
     info.pos.clear();
@@ -244,7 +234,6 @@ FlipInfo GameEngine::getFlipArray(Position pos, ContentType myType) const
         }
     }
 
-    this->flipCache.insert({posHash, info});
 
     return info;
 }
@@ -273,6 +262,7 @@ void GameEngine::flip(FlipInfo info)
         }
     }
     this->flipped = info.pos;
+
 }
 
 GameOutcome GameEngine::simulateRandomGame(bool oppoSide)
@@ -284,13 +274,14 @@ GameOutcome GameEngine::simulateRandomGame(bool oppoSide)
     {
         if (oppoSide)
         {
+            // oppoSide = 0;
             side = simulation.oppoSide_;
         }
         else
         {
+            // oppoSide = 1;
             side = simulation.playerSide_;
         }
-        // oppoSide = !oppoSide;
 
         std::vector<Position> legalMoves = simulation.getAvaliableMove(side);
         if (legalMoves.empty())
@@ -308,7 +299,8 @@ GameOutcome GameEngine::simulateRandomGame(bool oppoSide)
         simulation.flip(flipPos);
     }
 
-    return simulation.checkWin(false);
+    bool stale = !(simulation.board_.whiteCount_ + simulation.board_.blackCount_ == BOARD_SIZE * BOARD_SIZE);
+    return simulation.checkWin(stale);
 }
 
 void GameEngine::mcts(GameEngine gameEngine, int numSimulations, bool oppoSide, std::vector<Position> &bestMoves)
@@ -419,7 +411,7 @@ Position GameEngine::playerTurn()
               << "Your input: ";
 
 #ifdef DEBUG
-    int maxDepth = this->difficulty_ / 2 + 1;
+    int maxDepth = 1;
 
     int alpha = std::numeric_limits<int>::min();
     int beta = std::numeric_limits<int>::max();
@@ -605,7 +597,9 @@ Position GameEngine::opponentTurn()
     }
     else
     {
-        int depth = 50 * this->difficulty_ * this->difficulty_;
+        Position bestMove;
+
+        int depth = this->difficulty_ * this->difficulty_ * 50;
 
         int numThreads = std::thread::hardware_concurrency() / 4;
         if (!numThreads)
@@ -629,7 +623,7 @@ Position GameEngine::opponentTurn()
         std::uniform_int_distribution<> dis(0, bestMoves.size() - 1);
         int randomIndex = dis(generator);
 
-        Position bestMove = bestMoves[randomIndex];
+        bestMove = bestMoves[randomIndex];
 
         flipInfo = this->getFlipArray({bestMove.x, bestMove.y, this->oppoSide_}, this->oppoSide_);
         this->addPiece({bestMove.x, bestMove.y, this->oppoSide_});
