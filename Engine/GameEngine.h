@@ -50,18 +50,8 @@ private:
     std::vector<Position> flipped;
     std::vector<Position> valid;
 
-public:
-    GameEngine() = default;
-    GameEngine(ContentType);
-    ~GameEngine() = default;
-
-    ContentType getPlayerSide() const;
-
     ContentType getType(Position) const;
 
-    void setDiff(int);
-
-    void printBoard() const;
     void printAdditionalInfo() const;
 
     void addPiece(Position);
@@ -73,12 +63,21 @@ public:
     static int evaluateBoard(const GameEngine &, ContentType);
     int alphaBetaMinimax(GameEngine &, int, int, int, bool);
 
+    void mcts(GameEngine, int, bool, std::vector<Position> &);
+    GameOutcome simulateRandomGame(bool);
+
+public:
+    GameEngine() = default;
+    GameEngine(ContentType);
+    ~GameEngine() = default;
+
+    void setDiff(int);
+
     Position opponentTurn();
     Position playerTurn();
 
-    void mcts(GameEngine, int, ContentType, std::vector<Position> &);
-    GameOutcome simulateRandomGame(ContentType);
-
+    void printBoard() const;
+    ContentType getPlayerSide() const;
     GameOutcome checkWin(bool) const;
 
     friend Board;

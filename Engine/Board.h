@@ -34,22 +34,20 @@ private:
         y = -1;
     ContentType type_;
 
+    void update(ContentType);
+    ContentType getType() const;
+    char getChar() const;
+
+    bool operator==(const Position &other) const;
+    bool operator!=(const Position &other) const;
+
 public:
     Position() = default;
     Position(int x, int y, ContentType ctty);
     Position(const Position &) = default;
 
-    void update(ContentType);
-    ContentType getType() const;
-    char getChar() const;
-
     int getX() const;
     int getY() const;
-
-    bool
-    operator==(const Position &other) const;
-    bool
-    operator!=(const Position &other) const;
 
     friend Board;
     friend GameEngine;

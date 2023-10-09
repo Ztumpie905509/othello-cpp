@@ -263,12 +263,23 @@ void GameEngine::flip(FlipInfo info)
     this->flipped = info.pos;
 }
 
-GameOutcome GameEngine::simulateRandomGame(ContentType side)
+GameOutcome GameEngine::simulateRandomGame(bool oppoSide)
 {
     GameEngine simulation(*this);
+    ContentType side;
 
     while (true)
     {
+        if (oppoSide)
+        {
+            side = simulation.oppoSide_;
+        }
+        else
+        {
+            side = simulation.playerSide_;
+        }
+        oppoSide = !oppoSide;
+
         std::vector<Position> legalMoves = simulation.getAvaliableMove(side);
         if (legalMoves.empty())
             break;
@@ -288,8 +299,17 @@ GameOutcome GameEngine::simulateRandomGame(ContentType side)
     return simulation.checkWin(false);
 }
 
-void GameEngine::mcts(GameEngine gameEngine, int numSimulations, ContentType side, std::vector<Position> &bestMoves)
+void GameEngine::mcts(GameEngine gameEngine, int numSimulations, bool oppoSide, std::vector<Position> &bestMoves)
 {
+    ContentType side;
+    if (oppoSide)
+    {
+        side = gameEngine.oppoSide_;
+    }
+    else
+    {
+        side = gameEngine.playerSide_;
+    }
     std::vector<Position> legalMoves = gameEngine.getAvaliableMove(side);
 
     if (legalMoves.empty())
@@ -309,7 +329,7 @@ void GameEngine::mcts(GameEngine gameEngine, int numSimulations, ContentType sid
             simulation.addPiece(move);
             simulation.flip(flipPos);
 
-            GameOutcome outcome = simulation.simulateRandomGame(side);
+            GameOutcome outcome = simulation.simulateRandomGame(oppoSide);
 
             if (outcome == GameOutcome::BLACK_WIN && side == ContentType::BLACK)
             {
@@ -573,7 +593,7 @@ Position GameEngine::opponentTurn()
     }
     else
     {
-        int depth = 100 * this->difficulty_ * this->difficulty_;
+        int depth = 50 * this->difficulty_ * this->difficulty_;
 
         int numThreads = std::thread::hardware_concurrency() / 4;
         if (!numThreads)
@@ -585,7 +605,7 @@ Position GameEngine::opponentTurn()
         for (int i = 0; i < numThreads; ++i)
         {
             threads.emplace_back([=, &bestMoves]
-                                 { this->mcts(*this, depth / numThreads, this->oppoSide_, bestMoves); });
+                                 { this->mcts(*this, depth / numThreads, true, bestMoves); });
         }
 
         for (auto &thread : threads)
