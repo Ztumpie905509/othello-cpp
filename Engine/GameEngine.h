@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 #include "Board.h"
 
@@ -49,6 +50,8 @@ private:
     Position lastMove;
     std::vector<Position> flipped;
     std::vector<Position> valid;
+
+    std::unordered_map<int, FlipInfo> mutable flipCache;
 
     ContentType getType(Position) const;
 

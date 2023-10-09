@@ -192,10 +192,20 @@ void GameEngine::addPiece(Position pos)
         this->lastMove = this->board_.pos_[pos.x][pos.y];
         ++this->board_.blackCount_;
     }
+    this->flipCache.clear();
 }
 
 FlipInfo GameEngine::getFlipArray(Position pos, ContentType myType) const
 {
+    int posHash = pos.x * BOARD_SIZE + pos.y;
+
+    // Check if the flip positions are already calculated for this position
+    auto cacheIter = flipCache.find(posHash);
+    if (cacheIter != flipCache.end())
+    {
+        return cacheIter->second;
+    }
+
     FlipInfo info;
     info.flipTo = myType;
     info.pos.clear();
@@ -233,6 +243,8 @@ FlipInfo GameEngine::getFlipArray(Position pos, ContentType myType) const
             info.pos.insert(info.pos.end(), temp.begin(), temp.end());
         }
     }
+
+    this->flipCache.insert({posHash, info});
 
     return info;
 }
@@ -278,7 +290,7 @@ GameOutcome GameEngine::simulateRandomGame(bool oppoSide)
         {
             side = simulation.playerSide_;
         }
-        oppoSide = !oppoSide;
+        // oppoSide = !oppoSide;
 
         std::vector<Position> legalMoves = simulation.getAvaliableMove(side);
         if (legalMoves.empty())
