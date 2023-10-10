@@ -40,7 +40,7 @@ GameEngine::GameEngine(ContentType playerSide)
     }
 }
 
-ContentType GameEngine::getType(Position pos) const { return this->board_.pos_[pos.x][pos.y].getType(); };
+ContentType GameEngine::getType(const Position &pos) const { return this->board_.pos_[pos.x][pos.y].getType(); };
 
 ContentType GameEngine::getPlayerSide() const { return this->playerSide_; }
 
@@ -174,7 +174,7 @@ void GameEngine::setDiff(int d)
     this->difficulty_ = d;
 }
 
-void GameEngine::addPiece(Position pos)
+void GameEngine::addPiece(const Position &pos)
 {
     if (pos.x < 0 || pos.x >= BOARD_SIZE || pos.y < 0 || pos.y >= BOARD_SIZE)
     {
@@ -194,7 +194,7 @@ void GameEngine::addPiece(Position pos)
     }
 }
 
-FlipInfo GameEngine::getFlipArray(Position pos, ContentType myType) const
+FlipInfo GameEngine::getFlipArray(const Position &pos, ContentType myType) const
 {
     FlipInfo info;
     info.flipTo = myType;
@@ -269,7 +269,7 @@ GameOutcome GameEngine::simulateRandomGame(bool oppoSide, int depth)
     ContentType side;
     std::vector<Position> legalMoves;
 
-    for (int i = 0; i < depth; ++i)
+    for (;;)
     {
         if (oppoSide)
         {
@@ -301,18 +301,9 @@ GameOutcome GameEngine::simulateRandomGame(bool oppoSide, int depth)
     return simulation.checkWin(false);
 }
 
-void GameEngine::mcts(GameEngine gameEngine, int numSimulations, bool oppoSide, std::vector<Position> &bestMoves)
+void GameEngine::mcts(const GameEngine &gameEngine, int numSimulations, std::vector<Position> &bestMoves, std::vector<double> &bestScores)
 {
-    ContentType side;
-    if (oppoSide)
-    {
-        side = gameEngine.oppoSide_;
-    }
-    else
-    {
-        side = gameEngine.playerSide_;
-    }
-    std::vector<Position> legalMoves = gameEngine.getAvaliableMove(side);
+    std::vector<Position> legalMoves = gameEngine.getAvaliableMove(gameEngine.oppoSide_);
 
     if (legalMoves.empty())
         return;
@@ -327,17 +318,19 @@ void GameEngine::mcts(GameEngine gameEngine, int numSimulations, bool oppoSide, 
         for (int j = 0; j < numSimulations; ++j)
         {
             GameEngine simulation(*this);
-            FlipInfo flipPos = simulation.getFlipArray(move, side);
+            FlipInfo flipPos = simulation.getFlipArray(move, gameEngine.oppoSide_);
             simulation.addPiece(move);
             simulation.flip(flipPos);
 
-            GameOutcome outcome = simulation.simulateRandomGame(oppoSide, 3 * TOTAL_SIZE / 4);
+            int depth = TOTAL_SIZE;
 
-            if (outcome == GameOutcome::BLACK_WIN && side == ContentType::BLACK)
+            GameOutcome outcome = simulation.simulateRandomGame(true, depth);
+
+            if (outcome == GameOutcome::BLACK_WIN && gameEngine.oppoSide_ == ContentType::BLACK)
             {
                 ++winCount;
             }
-            else if (outcome == GameOutcome::WHITE_WIN && side == ContentType::WHITE)
+            else if (outcome == GameOutcome::WHITE_WIN && gameEngine.oppoSide_ == ContentType::WHITE)
             {
                 ++winCount;
             }
@@ -350,6 +343,17 @@ void GameEngine::mcts(GameEngine gameEngine, int numSimulations, bool oppoSide, 
 
     std::lock_guard<std::mutex> lock(mtx);
     bestMoves.push_back(legalMoves[bestMoveIndex]);
+    bestScores.push_back(winRates[bestMoveIndex]);
+
+#ifdef DEBUG
+    std::cout << "- - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
+    std::cout << "Thread win rate: \n";
+    for (int i = 0; i < legalMoves.size(); ++i)
+    {
+        std::cout << legalMoves[i].x << " " << legalMoves[i].y << " | " << winRates[i] << '\n';
+    }
+    std::cout << "- - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
+#endif
 }
 
 std::vector<Position> GameEngine::getAvaliableMove(ContentType side) const
@@ -369,7 +373,7 @@ std::vector<Position> GameEngine::getAvaliableMove(ContentType side) const
                 info = this->getFlipArray({x, y, side}, side);
                 if (info.pos.size() != 0)
                 {
-                    validPlayerPositions.push_back({x, y, ContentType::EMPTY});
+                    validPlayerPositions.push_back({x, y, side});
                 }
             }
         }
@@ -409,7 +413,7 @@ Position GameEngine::playerTurn()
               << "Your input: ";
 
 #ifdef DEBUG
-    int maxDepth = 5;
+    int maxDepth = 3;
 
     int alpha = std::numeric_limits<int>::min();
     int beta = std::numeric_limits<int>::max();
@@ -432,7 +436,7 @@ Position GameEngine::playerTurn()
             info = boardCopy.getFlipArray({move.x, move.y, this->playerSide_}, this->playerSide_);
             boardCopy.flip(info);
 
-            int score = alphaBetaMinimax(boardCopy, depth, alpha, beta, true);
+            int score = alphaBetaMinimax(boardCopy, depth, alpha, beta, true, this->playerSide_);
 
             if (score > bestScore)
             {
@@ -477,11 +481,11 @@ Position GameEngine::playerTurn()
     return {x, y, ContentType::EMPTY};
 }
 
-int GameEngine::alphaBetaMinimax(GameEngine &gameEngine, int depth, int alpha, int beta, bool maximizingPlayer)
+int GameEngine::alphaBetaMinimax(const GameEngine &gameEngine, int depth, int alpha, int beta, bool maximizingPlayer, ContentType evalSide)
 {
     if (depth <= 0 || this->board_.blackCount_ + this->board_.whiteCount_ == TOTAL_SIZE)
     {
-        return evaluateBoard(gameEngine, this->oppoSide_);
+        return evaluateBoard(gameEngine, evalSide);
     }
 
     if (maximizingPlayer)
@@ -498,7 +502,7 @@ int GameEngine::alphaBetaMinimax(GameEngine &gameEngine, int depth, int alpha, i
             FlipInfo flipInfo = boardCopy.getFlipArray({move.x, move.y, gameEngine.playerSide_}, gameEngine.playerSide_);
             boardCopy.flip(flipInfo);
 
-            int score = alphaBetaMinimax(boardCopy, depth - 1, alpha, beta, false);
+            int score = alphaBetaMinimax(boardCopy, depth - 1, alpha, beta, false, evalSide);
 
             alpha = std::max(alpha, score);
 
@@ -529,7 +533,7 @@ int GameEngine::alphaBetaMinimax(GameEngine &gameEngine, int depth, int alpha, i
             FlipInfo flipInfo = boardCopy.getFlipArray({move.x, move.y, gameEngine.oppoSide_}, gameEngine.oppoSide_);
             boardCopy.flip(flipInfo);
 
-            int score = alphaBetaMinimax(boardCopy, depth - 1, alpha, beta, true);
+            int score = alphaBetaMinimax(boardCopy, depth - 1, alpha, beta, true, evalSide);
 
             beta = std::min(beta, score);
 
@@ -598,70 +602,43 @@ Position GameEngine::opponentTurn()
     {
         Position bestMove;
         int treeMaxDepth = this->difficulty_;
-        if (treeMaxDepth >= 7)
-            treeMaxDepth = 7;
 
-        if (this->board_.whiteCount_ + this->board_.blackCount_ >= TOTAL_SIZE - treeMaxDepth)
+        int simCount = this->difficulty_ * this->difficulty_ * (TOTAL_SIZE / 2 - abs(this->board_.whiteCount_ + this->board_.blackCount_ - TOTAL_SIZE / 2)) / 2;
+
+        int numThreads = std::thread::hardware_concurrency() / 4;
+        if (!numThreads)
+            ++numThreads;
+
+        std::vector<std::thread> threads;
+
+#ifdef DEBUG
+        std::cout << "\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
+#endif
+
+        std::vector<Position> bestMoves;
+        bestMoves.clear();
+        std::vector<double> bestScores;
+        bestScores.clear();
+
+        for (int i = 0; i < numThreads; ++i)
         {
-            int alpha = std::numeric_limits<int>::min();
-            int beta = std::numeric_limits<int>::max();
-
-            int bestScore = std::numeric_limits<int>::min();
-            bestMove = validOpponentPositions[0];
-
-            unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-            std::mt19937 generator(seed);
-
-            std::shuffle(validOpponentPositions.begin(), validOpponentPositions.end(), generator);
-
-            for (int depth = 0; depth < treeMaxDepth; ++depth)
-            {
-                for (const Position &move : validOpponentPositions)
-                {
-                    GameEngine boardCopy(*this);
-
-                    boardCopy.addPiece({move.x, move.y, this->playerSide_});
-                    FlipInfo info = boardCopy.getFlipArray({move.x, move.y, this->oppoSide_}, this->oppoSide_);
-                    boardCopy.flip(info);
-
-                    int score = alphaBetaMinimax(boardCopy, depth, alpha, beta, false);
-
-                    if (score > bestScore)
-                    {
-                        bestScore = score;
-                        bestMove = move;
-                    }
-                }
-            }
+            threads.emplace_back([=, &bestMoves, &bestScores]
+                                 { this->mcts(*this, simCount / numThreads, bestMoves, bestScores); });
         }
-        else
+
+        for (auto &thread : threads)
         {
-            int depth = this->difficulty_ * this->difficulty_ * (TOTAL_SIZE / 2 - abs(this->board_.whiteCount_ + this->board_.blackCount_ - TOTAL_SIZE / 2)) / 8;
-
-            int numThreads = std::thread::hardware_concurrency() / 4;
-            if (!numThreads)
-                ++numThreads;
-
-            std::vector<std::thread> threads;
-
-            std::vector<Position> bestMoves;
-            for (int i = 0; i < numThreads; ++i)
-            {
-                threads.emplace_back([=, &bestMoves]
-                                     { this->mcts(*this, depth / numThreads, true, bestMoves); });
-            }
-
-            for (auto &thread : threads)
-            {
-                thread.join();
-            }
-            unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-            std::mt19937 generator(seed);
-            std::uniform_int_distribution<> dis(0, bestMoves.size() - 1);
-            int randomIndex = dis(generator);
-
-            bestMove = bestMoves[randomIndex];
+            thread.join();
         }
+
+        int bestMoveIndex = std::distance(bestScores.begin(), std::max_element(bestScores.begin(), bestScores.end()));
+
+        bestMove = bestMoves[bestMoveIndex];
+
+#ifdef DEBUG
+        std::cout << "Final best win rate: " << bestScores[bestMoveIndex] << "\n";
+        std::cout << "\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
+#endif
 
         flipInfo = this->getFlipArray({bestMove.x, bestMove.y, this->oppoSide_}, this->oppoSide_);
         this->addPiece({bestMove.x, bestMove.y, this->oppoSide_});

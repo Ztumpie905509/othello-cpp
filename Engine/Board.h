@@ -47,8 +47,8 @@ public:
     int getX() const;
     int getY() const;
 
-    bool operator==(const Position &other) const;
-    bool operator!=(const Position &other) const;
+    bool operator==(const Position &) const;
+    bool operator!=(const Position &) const;
 
     friend Board;
     friend GameEngine;
@@ -64,13 +64,13 @@ private:
 
 public:
     Board();
-    Board(const Board &other) = default;
+    Board(const Board &) = default;
 
     void getNumberColor(int &white, int &black) const;
 
-    void update(Position);
-    ContentType getType(Position) const;
-    char getChar(Position) const;
+    void update(const Position &);
+    ContentType getType(const Position &) const;
+    char getChar(const Position &) const;
 
     static char getChar(ContentType);
 

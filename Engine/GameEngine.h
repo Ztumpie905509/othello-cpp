@@ -41,7 +41,7 @@ struct FlipInfo
 class GameEngine
 {
 private:
-    int difficulty_ = 0;
+    int difficulty_;
 
     ContentType playerSide_;
     ContentType oppoSide_;
@@ -52,21 +52,21 @@ private:
     std::vector<Position> flipped;
     std::vector<Position> valid;
 
-    ContentType getType(Position) const;
+    ContentType getType(const Position &) const;
 
     void printAdditionalInfo() const;
 
-    void addPiece(Position);
+    void addPiece(const Position &);
     void flip(FlipInfo);
 
-    FlipInfo getFlipArray(Position, ContentType) const;
+    FlipInfo getFlipArray(const Position &, ContentType) const;
     std::vector<Position> getAvaliableMove(ContentType) const;
 
     static int evaluateBoard(const GameEngine &, ContentType);
-    int alphaBetaMinimax(GameEngine &, int, int, int, bool);
+    int alphaBetaMinimax(const GameEngine &, int, int, int, bool, ContentType);
 
-    void mcts(GameEngine, int, bool, std::vector<Position> &);
-    GameOutcome simulateRandomGame(bool, int depth);
+    void mcts(const GameEngine &, int, std::vector<Position> &, std::vector<double> &);
+    GameOutcome simulateRandomGame(bool, int);
 
 public:
     GameEngine() = default;

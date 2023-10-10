@@ -64,12 +64,12 @@ Board::Board()
     }
 }
 
-void Board::update(Position pos)
+void Board::update(const Position &pos)
 {
     this->pos_[pos.x][pos.y].update(pos.getType());
 };
 
-ContentType Board::getType(Position pos) const
+ContentType Board::getType(const Position &pos) const
 {
     return this->pos_[pos.x][pos.y].getType();
 }
@@ -96,4 +96,7 @@ void Board::getNumberColor(int &white, int &black) const
     black = this->blackCount_;
 }
 
-char Board::getChar(Position pos) const { return this->pos_[pos.x][pos.y].getChar(); };
+char Board::getChar(const Position &pos) const
+{
+    return this->pos_[pos.x][pos.y].getChar();
+};
