@@ -552,6 +552,7 @@ Position GameEngine::opponentTurn()
 {
     std::vector<Position> validOpponentPositions = this->getAvaliableMove(this->oppoSide_);
     FlipInfo flipInfo;
+    this->printBoard();
 
 #ifdef DEBUG
     this->valid = validOpponentPositions;
