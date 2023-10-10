@@ -596,10 +596,12 @@ Position GameEngine::opponentTurn()
     else
     {
         Position bestMove;
+        int treeMaxDepth = this->difficulty_;
+        if (treeMaxDepth >= 7)
+            treeMaxDepth = 7;
 
-        if (this->board_.whiteCount_ + this->board_.blackCount_ >= TOTAL_SIZE - this->difficulty_)
+        if (this->board_.whiteCount_ + this->board_.blackCount_ >= TOTAL_SIZE - treeMaxDepth)
         {
-            int treeMaxDepth = this->difficulty_;
             int alpha = std::numeric_limits<int>::min();
             int beta = std::numeric_limits<int>::max();
 
