@@ -596,32 +596,70 @@ Position GameEngine::opponentTurn()
     else
     {
         Position bestMove;
+        int treeMaxDepth = this->difficulty_ / 2;
 
-        int depth = this->difficulty_ * this->difficulty_ * (this->board_.whiteCount_ + this->board_.blackCount_) / 2;
-
-        int numThreads = std::thread::hardware_concurrency() / 4;
-        if (!numThreads)
-            ++numThreads;
-
-        std::vector<std::thread> threads;
-
-        std::vector<Position> bestMoves;
-        for (int i = 0; i < numThreads; ++i)
+        if (this->board_.whiteCount_ + this->board_.blackCount_ >= TOTAL_SIZE - treeMaxDepth)
         {
-            threads.emplace_back([=, &bestMoves]
-                                 { this->mcts(*this, depth / numThreads, true, bestMoves); });
-        }
 
-        for (auto &thread : threads)
+            int alpha = std::numeric_limits<int>::min();
+            int beta = std::numeric_limits<int>::max();
+
+            int bestScore = std::numeric_limits<int>::min();
+            bestMove = validOpponentPositions[0];
+
+            unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+            std::mt19937 generator(seed);
+
+            std::shuffle(validOpponentPositions.begin(), validOpponentPositions.end(), generator);
+
+            for (int depth = 0; depth < treeMaxDepth; ++depth)
+            {
+                for (const Position &move : validOpponentPositions)
+                {
+                    GameEngine boardCopy(*this);
+
+                    boardCopy.addPiece({move.x, move.y, this->playerSide_});
+                    FlipInfo info = boardCopy.getFlipArray({move.x, move.y, this->oppoSide_}, this->oppoSide_);
+                    boardCopy.flip(info);
+
+                    int score = alphaBetaMinimax(boardCopy, depth, alpha, beta, false);
+
+                    if (score > bestScore)
+                    {
+                        bestScore = score;
+                        bestMove = move;
+                    }
+                }
+            }
+        }
+        else
         {
-            thread.join();
-        }
-        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-        std::mt19937 generator(seed);
-        std::uniform_int_distribution<> dis(0, bestMoves.size() - 1);
-        int randomIndex = dis(generator);
+            int depth = this->difficulty_ * this->difficulty_ * (this->board_.whiteCount_ + this->board_.blackCount_) / 2;
 
-        bestMove = bestMoves[randomIndex];
+            int numThreads = std::thread::hardware_concurrency() / 4;
+            if (!numThreads)
+                ++numThreads;
+
+            std::vector<std::thread> threads;
+
+            std::vector<Position> bestMoves;
+            for (int i = 0; i < numThreads; ++i)
+            {
+                threads.emplace_back([=, &bestMoves]
+                                     { this->mcts(*this, depth / numThreads, true, bestMoves); });
+            }
+
+            for (auto &thread : threads)
+            {
+                thread.join();
+            }
+            unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+            std::mt19937 generator(seed);
+            std::uniform_int_distribution<> dis(0, bestMoves.size() - 1);
+            int randomIndex = dis(generator);
+
+            bestMove = bestMoves[randomIndex];
+        }
 
         flipInfo = this->getFlipArray({bestMove.x, bestMove.y, this->oppoSide_}, this->oppoSide_);
         this->addPiece({bestMove.x, bestMove.y, this->oppoSide_});
