@@ -308,6 +308,8 @@ void GameEngine::mcts(const GameEngine &gameEngine, int numSimulations, std::vec
     if (legalMoves.empty())
         return;
 
+    numSimulations /= legalMoves.size();
+
     std::vector<double> winRates(legalMoves.size(), 0.0);
 
     for (int i = 0; i < legalMoves.size(); ++i)
@@ -603,7 +605,7 @@ Position GameEngine::opponentTurn()
         Position bestMove;
         int treeMaxDepth = this->difficulty_;
 
-        int simCount = this->difficulty_ * this->difficulty_ * (TOTAL_SIZE / 2 - abs(this->board_.whiteCount_ + this->board_.blackCount_ - TOTAL_SIZE / 2)) / 2;
+        int simCount = this->difficulty_ * this->difficulty_ * 50;
 
         int numThreads = std::thread::hardware_concurrency() / 4;
         if (!numThreads)
