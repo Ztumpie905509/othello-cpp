@@ -597,7 +597,7 @@ Position GameEngine::opponentTurn()
     {
         Position bestMove;
 
-        int depth = this->difficulty_ * this->difficulty_ * 2;
+        int depth = this->difficulty_ * this->difficulty_ * (this->board_.whiteCount_ + this->board_.blackCount_) / 2;
 
         int numThreads = std::thread::hardware_concurrency() / 4;
         if (!numThreads)
