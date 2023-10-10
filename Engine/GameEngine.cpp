@@ -636,7 +636,7 @@ Position GameEngine::opponentTurn()
         }
         else
         {
-            int depth = this->difficulty_ * this->difficulty_ * (this->board_.whiteCount_ + this->board_.blackCount_) / 2;
+            int depth = this->difficulty_ * this->difficulty_ * (TOTAL_SIZE / 2 - abs(this->board_.whiteCount_ + this->board_.blackCount_ - TOTAL_SIZE / 2)) / 8;
 
             int numThreads = std::thread::hardware_concurrency() / 4;
             if (!numThreads)
