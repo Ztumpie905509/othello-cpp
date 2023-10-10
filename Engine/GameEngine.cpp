@@ -605,7 +605,7 @@ Position GameEngine::opponentTurn()
         Position bestMove;
         int treeMaxDepth = this->difficulty_;
 
-        int simCount = this->difficulty_ * this->difficulty_ * 50;
+        int simCount = this->difficulty_ * this->difficulty_ * 25;
 
         int numThreads = std::thread::hardware_concurrency() / 4;
         if (!numThreads)
