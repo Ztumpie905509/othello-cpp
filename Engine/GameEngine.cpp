@@ -268,6 +268,7 @@ GameOutcome GameEngine::simulateRandomGame(bool oppoSide, int depth)
     GameEngine simulation(*this);
     ContentType side;
     std::vector<Position> legalMoves;
+    bool stale = false;
 
     for (;;)
     {
@@ -284,7 +285,19 @@ GameOutcome GameEngine::simulateRandomGame(bool oppoSide, int depth)
 
         legalMoves = simulation.getAvaliableMove(side);
         if (legalMoves.empty())
-            break;
+        {
+            if (stale)
+            {
+                break;
+            }
+            else
+            {
+                stale = true;
+                continue;
+            }
+        }
+
+        stale = false;
 
         unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
         std::mt19937 generator(seed);
@@ -298,7 +311,7 @@ GameOutcome GameEngine::simulateRandomGame(bool oppoSide, int depth)
         simulation.flip(flipPos);
     }
 
-    return simulation.checkWin(false);
+    return simulation.checkWin(stale);
 }
 
 void GameEngine::mcts(const GameEngine &gameEngine, int numSimulations, std::vector<Position> &bestMoves, std::vector<double> &bestScores)
@@ -558,9 +571,10 @@ Position GameEngine::opponentTurn()
 {
     std::vector<Position> validOpponentPositions = this->getAvaliableMove(this->oppoSide_);
     FlipInfo flipInfo;
-    this->printBoard();
 
-#ifdef DEBUG
+#ifndef DEBUG
+    this->printBoard();
+#else
     this->valid = validOpponentPositions;
     this->printBoard();
     std::cout << validOpponentPositions.size() << " Opponent valid positions:\n";
