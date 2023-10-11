@@ -57,7 +57,7 @@ private:
     void printAdditionalInfo() const;
 
     void addPiece(const Position &);
-    void flip(FlipInfo);
+    void flip(const FlipInfo &);
 
     FlipInfo getFlipArray(const Position &, ContentType) const;
     std::vector<Position> getAvaliableMove(ContentType) const;

@@ -237,7 +237,7 @@ FlipInfo GameEngine::getFlipArray(const Position &pos, ContentType myType) const
     return info;
 }
 
-void GameEngine::flip(FlipInfo info)
+void GameEngine::flip(const FlipInfo &info)
 {
     for (const Position &pos : info.pos)
     {
