@@ -65,7 +65,7 @@ private:
     static int evaluateBoard(const GameEngine &, ContentType);
     int alphaBetaMinimax(const GameEngine &, int, int, int, bool, ContentType);
 
-    void mcts(const GameEngine &, int, std::vector<Position> &, std::vector<double> &);
+    void mcts(const GameEngine &, int, const std::vector<Position> &, std::vector<std::vector<double>> &);
     GameOutcome simulateRandomGame(bool, int);
 
 public:

@@ -314,13 +314,8 @@ GameOutcome GameEngine::simulateRandomGame(bool oppoSide, int depth)
     return simulation.checkWin(stale);
 }
 
-void GameEngine::mcts(const GameEngine &gameEngine, int numSimulations, std::vector<Position> &bestMoves, std::vector<double> &bestScores)
+void GameEngine::mcts(const GameEngine &gameEngine, int numSimulations, const std::vector<Position> &legalMoves, std::vector<std::vector<double>> &bestScores)
 {
-    std::vector<Position> legalMoves = gameEngine.getAvaliableMove(gameEngine.oppoSide_);
-
-    if (legalMoves.empty())
-        return;
-
     numSimulations /= legalMoves.size();
 
     std::vector<double> winRates(legalMoves.size(), 0.0);
@@ -357,8 +352,7 @@ void GameEngine::mcts(const GameEngine &gameEngine, int numSimulations, std::vec
     int bestMoveIndex = std::distance(winRates.begin(), std::max_element(winRates.begin(), winRates.end()));
 
     std::lock_guard<std::mutex> lock(mtx);
-    bestMoves.push_back(legalMoves[bestMoveIndex]);
-    bestScores.push_back(winRates[bestMoveIndex]);
+    bestScores.push_back(winRates);
 
 #ifdef DEBUG
     std::cout << "- - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
@@ -418,7 +412,7 @@ Position GameEngine::playerTurn()
     std::cout << "Your valid positions:\n";
     for (size_t i = 0; i < validPlayerPositions.size(); ++i)
     {
-        std::cout << validPlayerPositions[i].x << " " << validPlayerPositions[i].y << " | ";
+        std::cout << validPlayerPositions[i] << " | ";
         if ((i + 1) % 5 == 0)
         {
             std::cout << "\n";
@@ -631,15 +625,12 @@ Position GameEngine::opponentTurn()
         std::cout << "\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
 #endif
 
-        std::vector<Position> bestMoves;
-        bestMoves.clear();
-        std::vector<double> bestScores;
-        bestScores.clear();
+        std::vector<std::vector<double>> bestScores;
 
         for (int i = 0; i < numThreads; ++i)
         {
-            threads.emplace_back([=, &bestMoves, &bestScores]
-                                 { this->mcts(*this, simCount / numThreads, bestMoves, bestScores); });
+            threads.emplace_back([=, &validOpponentPositions, &bestScores]
+                                 { this->mcts(*this, simCount / numThreads, validOpponentPositions, bestScores); });
         }
 
         for (auto &thread : threads)
@@ -647,12 +638,29 @@ Position GameEngine::opponentTurn()
             thread.join();
         }
 
-        int bestMoveIndex = std::distance(bestScores.begin(), std::max_element(bestScores.begin(), bestScores.end()));
+        double maxAverage = std::numeric_limits<double>::min();
+        int bestMoveIndex = 0;
 
-        bestMove = bestMoves[bestMoveIndex];
+        for (int j = 0; j < validOpponentPositions.size(); ++j)
+        {
+            double avg = 0;
+            for (int i = 0; i < bestScores.size(); ++i)
+            {
+                avg += bestScores[i][j];
+            }
+            avg /= bestScores.size();
+            if (avg > maxAverage)
+            {
+                maxAverage = avg;
+                bestMoveIndex = j;
+            }
+        }
+
+        bestMove = validOpponentPositions[bestMoveIndex];
 
 #ifdef DEBUG
-        std::cout << "Final best win rate: " << bestScores[bestMoveIndex] << "\n";
+        std::cout << "Final best win rate: " << maxAverage << "\n";
+        std::cout << "Final best move: " << bestMove << "\n";
         std::cout << "\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
 #endif
 
