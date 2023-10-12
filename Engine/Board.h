@@ -1,6 +1,7 @@
 #ifndef BOARD_H
 #define BOARD_H
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -49,6 +50,8 @@ public:
 
     bool operator==(const Position &) const;
     bool operator!=(const Position &) const;
+
+    friend std::ostream &operator<<(std::ostream &, const Position &);
 
     friend Board;
     friend GameEngine;

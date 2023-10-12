@@ -53,6 +53,12 @@ bool Position::operator!=(const Position &other) const
     return x != other.x || y != other.y;
 }
 
+std::ostream &operator<<(std::ostream &ostream, const Position &p)
+{
+    ostream << p.getX() << " " << p.getY();
+    return ostream;
+}
+
 Board::Board()
 {
     for (int i = 0; i < BOARD_SIZE; ++i)
