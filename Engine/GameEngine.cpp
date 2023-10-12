@@ -300,7 +300,7 @@ GameOutcome GameEngine::simulateRandomGame(bool oppoSide, int depth)
         stale = false;
 
         unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-        std::mt19937 generator(seed);
+        std::minstd_rand generator(seed);
         std::uniform_int_distribution<> dis(0, legalMoves.size() - 1);
         int randomIndex = dis(generator);
 
@@ -437,7 +437,7 @@ Position GameEngine::playerTurn()
     Position bestMove = validPlayerPositions[0];
 
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::mt19937 generator(seed);
+    std::minstd_rand generator(seed);
 
     std::shuffle(validPlayerPositions.begin(), validPlayerPositions.end(), generator);
 
@@ -602,7 +602,7 @@ Position GameEngine::opponentTurn()
         std::uniform_int_distribution<std::size_t> distribution(0, validOpponentPositions.size() - 1);
 
         unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-        std::mt19937 generator(seed);
+        std::minstd_rand generator(seed);
 
         std::size_t number = distribution(generator);
         x = validOpponentPositions[number].x;
