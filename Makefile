@@ -10,7 +10,7 @@ debug: CPPFLAGS += -fsanitize=leak,address,undefined -g -DDEBUG
 debug: $(OBJS)
 	g++ $(CPPFLAGS) -o $(EXE) $(OBJS)
 	rm -vf $(OBJS)
-	echo "w\n8" | ./$(EXE)
+	echo "w\n10" | ./$(EXE)
 
 $(EXE): $(OBJS)
 	g++ $(CPPFLAGS) -o $@ $(OBJS)

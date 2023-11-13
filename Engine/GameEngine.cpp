@@ -1,8 +1,8 @@
 #include <algorithm>
 #include <iostream>
 #include <mutex>
-#include <string>
 #include <random>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -422,7 +422,7 @@ Position GameEngine::playerTurn()
               << "Your input: ";
 
 #ifdef DEBUG
-    int maxDepth = 3;
+    int maxDepth = 5;
 
     int alpha = std::numeric_limits<int>::min();
     int beta = std::numeric_limits<int>::max();
