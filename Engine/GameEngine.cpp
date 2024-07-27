@@ -682,6 +682,7 @@ Position GameEngine::opponentTurn()
         }
     }
     std::cout << "\n";
+    this->valid.clear();
 #endif
 
     int x, y;
