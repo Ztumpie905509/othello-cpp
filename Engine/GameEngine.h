@@ -2,8 +2,8 @@
 #define GAME_ENGINE_H
 
 #include <memory>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include "Board.h"
 
@@ -65,7 +65,7 @@ private:
     static int evaluateBoard(const GameEngine &, ContentType);
     int alphaBetaMinimax(const GameEngine &, int, int, int, bool, ContentType);
 
-    void mcts(const GameEngine &, int, const std::vector<Position> &, std::vector<std::vector<double>> &);
+    void mcts(const GameEngine &, int, const std::vector<Position> &, std::vector<double> &, std::vector<Position> &);
     GameOutcome simulateRandomGame(bool, int);
 
 public:
@@ -83,6 +83,7 @@ public:
     GameOutcome checkWin(bool) const;
 
     friend Board;
+    friend MCTS;
 };
 
 #endif

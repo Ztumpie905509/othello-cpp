@@ -11,6 +11,7 @@ const int TOTAL_SIZE = 64;
 class Board;
 class Position;
 class GameEngine;
+class MCTS;
 
 namespace printColor
 {
@@ -55,6 +56,7 @@ public:
 
     friend Board;
     friend GameEngine;
+    friend MCTS;
 };
 
 class Board
