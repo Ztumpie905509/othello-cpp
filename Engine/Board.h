@@ -30,19 +30,21 @@ enum class ContentType
     BLACK
 };
 
+struct PositionHash;
+
 class Position
 {
 private:
-    int x = -1,
-        y = -1;
+    int x, y;
     ContentType type_;
 
     void update(ContentType);
-    ContentType getType() const;
     char getChar() const;
 
 public:
-    Position() = default;
+    ContentType getType() const;
+
+    Position();
     Position(int x, int y, ContentType ctty);
     Position(const Position &) = default;
 
@@ -51,12 +53,15 @@ public:
 
     bool operator==(const Position &) const;
     bool operator!=(const Position &) const;
+    bool operator<(const Position &) const;
+    size_t operator()(const Position &) const;
 
     friend std::ostream &operator<<(std::ostream &, const Position &);
 
     friend Board;
     friend GameEngine;
     friend MCTS;
+    friend PositionHash;
 };
 
 class Board

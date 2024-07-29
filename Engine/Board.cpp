@@ -1,3 +1,4 @@
+#include <functional>
 #include <string>
 
 #include "Board.h"
@@ -6,7 +7,29 @@
 class Position;
 class Board;
 
-Position::Position(int x, int y, ContentType ctty) : x(x), y(y), type_(ctty){};
+Position::Position() : x(-1), y(-1), type_(ContentType::EMPTY) {};
+Position::Position(int x, int y, ContentType ctty) : x(x), y(y), type_(ctty) {};
+
+struct PositionHash
+{
+    std::size_t operator()(const Position &p)
+    {
+        std::size_t h1 = std::hash<int>()(p.getX());
+        std::size_t h2 = std::hash<int>()(p.getY());
+        std::size_t h3 = std::hash<ContentType>()(p.getType());
+
+        return h1 + (h2 * 31) + (h3 * 31 * 31);
+    }
+};
+
+std::size_t Position::operator()(const Position &p) const
+{
+    std::size_t h1 = std::hash<int>()(p.getX());
+    std::size_t h2 = std::hash<int>()(p.getY());
+    std::size_t h3 = std::hash<ContentType>()(p.getType());
+
+    return h1 + (h2 * 31) + (h3 * 31 * 31);
+}
 
 void Position::update(ContentType type)
 {
@@ -51,6 +74,11 @@ bool Position::operator==(const Position &other) const
 bool Position::operator!=(const Position &other) const
 {
     return x != other.x || y != other.y;
+}
+
+bool Position::operator<(const Position &other) const
+{
+    return this->x < other.x && this->y < other.y;
 }
 
 std::ostream &operator<<(std::ostream &ostream, const Position &p)

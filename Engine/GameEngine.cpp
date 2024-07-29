@@ -6,6 +6,7 @@
 #include <random>
 #include <string>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 std::mutex mtx;
@@ -324,8 +325,8 @@ struct Node
     Position move;
     Node *parent;
     std::vector<Node *> children;
-    int wins;
-    int visits;
+    long long wins;
+    long long visits;
 
     Node(Position move, Node *parent = nullptr)
         : move(move), parent(parent), wins(0), visits(0) {}
@@ -431,7 +432,7 @@ private:
         Node *bestChild = *std::max_element(node->children.begin(), node->children.end(),
                                             [](Node *a, Node *b)
                                             {
-                                                return a->visits < b->visits;
+                                                return a->wins < b->wins;
                                             });
         return bestChild->move;
     }
@@ -447,7 +448,7 @@ private:
 
     void printWinProbabilities(double &bestWinRate)
     {
-        std::lock_guard<std::mutex> lock(consoleMutex); // Ensure exclusive access to the console
+        std::lock_guard<std::mutex> lock(consoleMutex);
 
         std::cout << "Win probabilities for each available move:\n";
         Position bestMove = {-1, -1, ContentType::EMPTY};
@@ -474,14 +475,14 @@ private:
     }
 };
 
-void GameEngine::mcts(const GameEngine &gameEngine, int numSimulations, const std::vector<Position> &legalMoves, std::vector<double> &bestScores, std::vector<Position> &bestMoves)
+void GameEngine::mcts(const GameEngine &gameEngine, int numSimulations, const std::vector<Position> &legalMoves, std::unordered_map<Position, double, Position> &bestMoves)
 {
     double winRate = 0;
     MCTS mcts(*this, this->oppoSide_, numSimulations);
-    bestMoves.push_back(mcts.run(winRate));
+    Position bestMove = mcts.run(winRate);
 
     std::lock_guard<std::mutex> lock(mtx);
-    bestScores.push_back(winRate); // Placeholder for win rate of the best move
+    bestMoves.insert({bestMove, winRate});
 }
 
 std::vector<Position> GameEngine::getAvaliableMove(ContentType side) const
@@ -631,7 +632,7 @@ int GameEngine::alphaBetaMinimax(const GameEngine &gameEngine, int depth, int al
             alpha = std::max(alpha, score);
             if (beta <= alpha)
             {
-                break; // Beta cut-off
+                break;
             }
         }
         return maxScore;
@@ -651,7 +652,7 @@ int GameEngine::alphaBetaMinimax(const GameEngine &gameEngine, int depth, int al
             beta = std::min(beta, score);
             if (beta <= alpha)
             {
-                break; // Alpha cut-off
+                break;
             }
         }
         return minScore;
@@ -701,43 +702,41 @@ Position GameEngine::opponentTurn()
     }
     else
     {
-        Position bestMove;
         int simCount = this->difficulty_ * this->difficulty_ * 75;
         int numThreads = std::thread::hardware_concurrency() / 2;
         if (!numThreads)
             ++numThreads;
 
+        std::unordered_map<Position, double, Position> bestMoves;
         std::vector<std::future<void>> futures;
-        std::vector<double> bestScores;
-        std::vector<Position> bestMoves;
 
         for (int i = 0; i < numThreads; ++i)
         {
-            futures.push_back(std::async(std::launch::async, [=, &validOpponentPositions, &bestScores, &bestMoves]
-                                         { this->mcts(*this, simCount / numThreads + 1, validOpponentPositions, bestScores, bestMoves); }));
+            futures.push_back(std::async(std::launch::async, [=, &validOpponentPositions, &bestMoves]
+                                         { this->mcts(*this, simCount / numThreads + 1, validOpponentPositions, bestMoves); }));
         }
 
-        for (auto &future : futures)
+        for (std::future<void> &future : futures)
         {
             future.get();
         }
 
-        double maxAverage = 0;
-        int bestMoveIndex = 0;
-
-        for (int i = 0; i < bestScores.size(); ++i)
+        Position bestMove;
+        double bestRate = 0;
+        for (std::pair<Position, double> node : bestMoves)
         {
-            if (bestScores[i] > maxAverage)
+            double curRate = node.second;
+            if (curRate >= bestRate)
             {
-                maxAverage = bestScores[i];
-                bestMoveIndex = i;
+                bestRate = curRate;
+                bestMove = node.first;
             }
         }
+
 #ifdef DEBUG
-        std::cout << "Best Move = " << bestMoves[bestMoveIndex] << " | " << maxAverage * 100 << "%\n";
+        std::cout << "Best Move = " << bestMove << " | " << bestRate * 100 << "%\n";
 #endif
 
-        bestMove = bestMoves[bestMoveIndex];
         flipInfo = this->getFlipArray({bestMove.x, bestMove.y, this->oppoSide_}, this->oppoSide_);
         this->addPiece({bestMove.x, bestMove.y, this->oppoSide_});
         this->flip(flipInfo);
