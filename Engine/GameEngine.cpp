@@ -482,7 +482,17 @@ void GameEngine::mcts(const GameEngine &gameEngine, int numSimulations, const st
     Position bestMove = mcts.run(winRate);
 
     std::lock_guard<std::mutex> lock(mtx);
-    bestMoves.insert({bestMove, winRate});
+    auto it = bestMoves.find(bestMove);
+    if (it == bestMoves.end())
+    {
+        bestMoves.insert({bestMove, winRate});
+    }
+    else
+    {
+        double avg = (it.operator->()->second + winRate) / 2;
+        bestMoves.erase(bestMove);
+        bestMoves.insert({bestMove, avg});
+    }
 }
 
 std::vector<Position> GameEngine::getAvaliableMove(ContentType side) const
