@@ -343,7 +343,7 @@ public:
 
     ~MCTS() { deleteTree(root_); }
 
-    Position run(double &winRate)
+    void run(std::unordered_map<Position, double, Position> &threadMoves)
     {
         for (int i = 0; i < simulations_; ++i)
         {
@@ -357,8 +357,7 @@ public:
             backpropagate(node, outcome);
         }
 
-        printWinProbabilities(winRate);
-        return bestMove(root_);
+        printWinProbabilities(threadMoves);
     }
 
 private:
@@ -446,18 +445,22 @@ private:
         delete node;
     }
 
-    void printWinProbabilities(double &bestWinRate)
+    void printWinProbabilities(std::unordered_map<Position, double, Position> &threadMoves)
     {
         std::lock_guard<std::mutex> lock(consoleMutex);
 
         std::cout << "Win probabilities for each available move:\n";
         Position bestMove = {-1, -1, ContentType::EMPTY};
 
+        double bestWinRate = 0;
+
         for (Node *child : root_->children)
         {
             double winRate = static_cast<double>(child->wins) / child->visits;
-            std::cout << "Move (" << child->move.x << ", " << child->move.y << "): "
-                      << winRate * 100 << "%\n";
+            std::cout << "Move (" << child->move.x << ", " << child->move.y << "): " << winRate * 100 << "%\n";
+
+            threadMoves.insert({child->move, winRate});
+
             if (winRate >= bestWinRate)
             {
                 bestWinRate = winRate;
@@ -475,24 +478,30 @@ private:
     }
 };
 
+void merge(std::unordered_map<Position, double, Position> &original, const std::unordered_map<Position, double, Position> &newMap)
+{
+    for (const std::unordered_map<Position, double>::const_iterator::value_type &it : newMap)
+    {
+        if (original.count(it.first) > 0)
+        {
+            original[it.first] += it.second;
+        }
+        else
+        {
+            original.insert(it);
+        }
+    }
+}
+
 void GameEngine::mcts(const GameEngine &gameEngine, int numSimulations, const std::vector<Position> &legalMoves, std::unordered_map<Position, double, Position> &bestMoves)
 {
-    double winRate = 0;
+    std::unordered_map<Position, double, Position> threadMoves;
+
     MCTS mcts(*this, this->oppoSide_, numSimulations);
-    Position bestMove = mcts.run(winRate);
+    mcts.run(threadMoves);
 
     std::lock_guard<std::mutex> lock(mtx);
-    auto it = bestMoves.find(bestMove);
-    if (it == bestMoves.end())
-    {
-        bestMoves.insert({bestMove, winRate});
-    }
-    else
-    {
-        double avg = (it.operator->()->second + winRate) / 2;
-        bestMoves.erase(bestMove);
-        bestMoves.insert({bestMove, avg});
-    }
+    merge(bestMoves, threadMoves);
 }
 
 std::vector<Position> GameEngine::getAvaliableMove(ContentType side) const
@@ -733,7 +742,12 @@ Position GameEngine::opponentTurn()
 
         Position bestMove;
         double bestRate = 0;
-        for (std::pair<Position, double> node : bestMoves)
+        for (std::pair<const Position, double> &it : bestMoves)
+        {
+            it.second /= numThreads;
+        }
+
+        for (const std::pair<Position, double> &node : bestMoves)
         {
             double curRate = node.second;
             if (curRate >= bestRate)
@@ -744,7 +758,13 @@ Position GameEngine::opponentTurn()
         }
 
 #ifdef DEBUG
-        std::cout << "Best Move = " << bestMove << " | " << bestRate * 100 << "%\n";
+        std::cout << "Final probabilities for all threads combined:\n";
+        for (const std::pair<const Position, double> &it : bestMoves)
+        {
+            std::cout << "Move (" << it.first.x << ", " << it.first.y << "): " << it.second * 100 << "%\n";
+        }
+        std::cout << "Best move: (" << bestMove.x << ", " << bestMove.y << ") with a win rate of "
+                  << bestRate * 100 << "%\n\n\n";
 #endif
 
         flipInfo = this->getFlipArray({bestMove.x, bestMove.y, this->oppoSide_}, this->oppoSide_);
