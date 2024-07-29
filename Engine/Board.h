@@ -30,8 +30,6 @@ enum class ContentType
     BLACK
 };
 
-struct PositionHash;
-
 class Position
 {
 private:
@@ -61,7 +59,6 @@ public:
     friend Board;
     friend GameEngine;
     friend MCTS;
-    friend PositionHash;
 };
 
 class Board
