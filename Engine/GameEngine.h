@@ -62,14 +62,14 @@ private:
     std::vector<Position> getAvaliableMove(ContentType) const;
 
     static int evaluateBoard(const GameEngine &, ContentType);
-    int alphaBetaMinimax(const GameEngine &, int, int, int, bool, ContentType);
+    int alphaBetaMinimax(const GameEngine &, int, int, int, bool, ContentType) const;
 
     void mcts(const GameEngine &gameEngine, int numSimulations, const std::vector<Position> &legalMoves, std::unordered_map<Position, double, Position> &bestMoves);
     GameOutcome simulateRandomGame(bool, int);
 
 public:
-    GameEngine() = default;
-    GameEngine(ContentType);
+    GameEngine() = delete;
+    explicit GameEngine(ContentType);
     ~GameEngine() = default;
 
     void setDiff(int);

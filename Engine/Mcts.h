@@ -15,7 +15,7 @@ struct Node
     long long wins;
     long long visits;
 
-    Node(Position move, Node *parent = nullptr)
+    explicit Node(Position move, Node *parent = nullptr)
         : move(move), parent(parent), wins(0), visits(0) {}
 };
 
@@ -23,10 +23,13 @@ class MCTS
 {
 public:
     MCTS(GameEngine &gameEngine, ContentType side, int simulations);
+    MCTS(const MCTS &other);
     ~MCTS();
 
     void run(std::unordered_map<Position, double, Position> &threadMoves);
     static void merge(std::unordered_map<Position, double, Position> &original, const std::unordered_map<Position, double, Position> &newMap);
+
+    void operator=(const MCTS &other);
 
 private:
     double explore_constant = 1;
@@ -39,12 +42,12 @@ private:
 
     Node *select(Node *node);
     void expand(Node *node);
-    GameOutcome simulate(Node *node);
-    void backpropagate(Node *node, GameOutcome outcome);
-    double ucb1(Node *node);
-    Position bestMove(Node *node);
+    GameOutcome simulate(const Node *node);
+    void backpropagate(Node *node, GameOutcome outcome) const;
+    double ucb1(const Node *node) const;
+    // Position bestMove(Node *node);
 
-    void deleteTree(Node *node);
+    static void deleteTree(Node *node);
 
     void printWinProbabilities(std::unordered_map<Position, double, Position> &threadMoves);
 };

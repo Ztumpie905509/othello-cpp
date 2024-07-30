@@ -14,7 +14,18 @@ MCTS::MCTS(GameEngine &gameEngine, ContentType side, int simulations)
     this->root_ = new Node(Position{-1, -1, ContentType::EMPTY});
 }
 
-MCTS::~MCTS() { deleteTree(root_); }
+MCTS::MCTS(const MCTS &other)
+    : gameEngine_(other.gameEngine_), side_(other.side_), simulations_(other.simulations_)
+{
+    this->explore_constant = other.explore_constant;
+    this->prev_rate = other.prev_rate;
+    this->root_ = new Node(Position{-1, -1, ContentType::EMPTY});
+};
+
+MCTS::~MCTS()
+{
+    deleteTree(root_);
+}
 
 void MCTS::run(std::unordered_map<Position, double, Position> &threadMoves)
 {
@@ -48,12 +59,23 @@ void MCTS::merge(std::unordered_map<Position, double, Position> &original, const
     }
 }
 
+void MCTS::operator=(const MCTS &other)
+{
+    deleteTree(this->root_);
+    this->root_ = new Node(Position{-1, -1, ContentType::EMPTY});
+    this->explore_constant = other.explore_constant;
+    this->prev_rate = other.prev_rate;
+    this->gameEngine_ = other.gameEngine_;
+    this->side_ = other.side_;
+    this->simulations_ = other.simulations_;
+}
+
 Node *MCTS::select(Node *node)
 {
     while (!node->children.empty())
     {
         node = *std::max_element(node->children.begin(), node->children.end(),
-                                 [this](Node *a, Node *b)
+                                 [this](const Node *a, const Node *b)
                                  {
                                      return this->ucb1(a) < this->ucb1(b);
                                  });
@@ -70,7 +92,7 @@ void MCTS::expand(Node *node)
     }
 }
 
-GameOutcome MCTS::simulate(Node *node)
+GameOutcome MCTS::simulate(const Node *node)
 {
     GameEngine simulation(this->gameEngine_);
     Position move = node->move;
@@ -83,7 +105,7 @@ GameOutcome MCTS::simulate(Node *node)
     return simulation.simulateRandomGame(true, TOTAL_SIZE);
 }
 
-void MCTS::backpropagate(Node *node, GameOutcome outcome)
+void MCTS::backpropagate(Node *node, GameOutcome outcome) const
 {
     while (node != nullptr)
     {
@@ -97,7 +119,7 @@ void MCTS::backpropagate(Node *node, GameOutcome outcome)
     }
 }
 
-double MCTS::ucb1(Node *node)
+double MCTS::ucb1(const Node *node) const
 {
     if (node->visits == 0)
         return std::numeric_limits<double>::max();
@@ -105,21 +127,21 @@ double MCTS::ucb1(Node *node)
            this->explore_constant * std::sqrt(2 * std::log(node->parent->visits) / node->visits);
 }
 
-Position MCTS::bestMove(Node *node)
-{
-    Node *bestChild = *std::max_element(node->children.begin(), node->children.end(),
-                                        [](Node *a, Node *b)
-                                        {
-                                            return a->wins < b->wins;
-                                        });
-    return bestChild->move;
-}
+// Position MCTS::bestMove(Node *node)
+// {
+//     Node *bestChild = *std::max_element(node->children.begin(), node->children.end(),
+//                                         [](Node *a, Node *b)
+//                                         {
+//                                             return a->wins < b->wins;
+//                                         });
+//     return bestChild->move;
+// }
 
 void MCTS::deleteTree(Node *node)
 {
     for (Node *child : node->children)
     {
-        this->deleteTree(child);
+        deleteTree(child);
     }
     delete node;
 }

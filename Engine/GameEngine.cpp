@@ -209,7 +209,7 @@ FlipInfo GameEngine::getFlipArray(const Position &pos, ContentType myType) const
     for (const Position &dir : directions)
     {
         std::vector<Position> temp;
-        bool valid = false;
+        bool stepValid = false;
 
         for (int cur_x = pos.x + dir.x, cur_y = pos.y + dir.y;
              cur_x >= 0 && cur_x < BOARD_SIZE && cur_y >= 0 && cur_y < BOARD_SIZE;
@@ -217,13 +217,13 @@ FlipInfo GameEngine::getFlipArray(const Position &pos, ContentType myType) const
         {
             if (this->board_.pos_[cur_x][cur_y].getType() == ContentType::EMPTY)
             {
-                valid = false;
+                stepValid = false;
                 break;
             }
 
             if (this->board_.pos_[cur_x][cur_y].getType() == myType)
             {
-                valid = true;
+                stepValid = true;
                 break;
             }
 
@@ -231,7 +231,7 @@ FlipInfo GameEngine::getFlipArray(const Position &pos, ContentType myType) const
             temp.push_back(current);
         }
 
-        if (valid)
+        if (stepValid)
         {
             info.pos.insert(info.pos.end(), temp.begin(), temp.end());
         }
@@ -455,7 +455,7 @@ Position GameEngine::playerTurn()
     return {x, y, ContentType::EMPTY};
 }
 
-int GameEngine::alphaBetaMinimax(const GameEngine &gameEngine, int depth, int alpha, int beta, bool maximizingPlayer, ContentType evalSide)
+int GameEngine::alphaBetaMinimax(const GameEngine &gameEngine, int depth, int alpha, int beta, bool maximizingPlayer, ContentType evalSide) const
 {
     if (depth <= 0 || this->board_.blackCount_ + this->board_.whiteCount_ == TOTAL_SIZE)
     {
@@ -631,30 +631,30 @@ int GameEngine::evaluateBoard(const GameEngine &gameEngine, ContentType evalSide
 
 GameOutcome GameEngine::checkWin(bool stale) const
 {
-    int white, black;
+    int white = 0, black = 0;
     this->board_.getNumberColor(white, black);
 
     if (stale)
     {
         if (white == black)
+        {
             return GameOutcome::DRAW;
-        else if (white > black)
-            return GameOutcome::WHITE_WIN;
-        else if (black > white)
-            return GameOutcome::BLACK_WIN;
-        else
-            return GameOutcome::IN_PROGRESS;
+        }
+        return (white > black) ? GameOutcome::WHITE_WIN : GameOutcome::BLACK_WIN;
     }
-    else
+
+    if (black == 0 || (white + black == TOTAL_SIZE && white > black))
     {
-        if (black == 0 || (white + black == TOTAL_SIZE && white > black))
-            return GameOutcome::WHITE_WIN;
-        else if (white == 0 || (white + black == TOTAL_SIZE && white < black))
-            return GameOutcome::BLACK_WIN;
-        else if (white + black == TOTAL_SIZE && white == black)
-            return GameOutcome::DRAW;
-        else
-            return GameOutcome::IN_PROGRESS;
+        return GameOutcome::WHITE_WIN;
     }
+    if (white == 0 || (white + black == TOTAL_SIZE && white < black))
+    {
+        return GameOutcome::BLACK_WIN;
+    }
+    if (white + black == TOTAL_SIZE && white == black)
+    {
+        return GameOutcome::DRAW;
+    }
+
     return GameOutcome::IN_PROGRESS;
 }
