@@ -1,9 +1,7 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-#include <iostream>
-#include <string>
-#include <vector>
+#include <ostream>
 
 const int BOARD_SIZE = 8;
 const int TOTAL_SIZE = 64;
