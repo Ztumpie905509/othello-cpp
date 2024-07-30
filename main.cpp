@@ -41,7 +41,7 @@ int main()
 {
     std::cout << "\n";
     char input = getUserInput("Welcome to othello game!\nPlease choose your side: white (w) or black (b)", "Sorry, your input is invalid.");
-    int diff = getIntInput("\nPlease enter the difficulty of the AI range from 1 to 20.\n\nWARNING: Computation time can be increased exponentially with repect to your input.\nWARNING: A number beyond 15 may take a long time to compute.\n\nIf you would like an Artificial Retard instead, please enter -1.", "Sorry, your input is invalid.", -1, 20);
+    int diff = getIntInput("\nPlease enter the difficulty of the AI range from 1 to 100.\n\nWARNING: Computation time can be increased exponentially with repect to your input.\nWARNING: A number beyond 15 may take a long time to compute.\n\nIf you would like an Artificial Retard instead, please enter -1.", "Sorry, your input is invalid.", -1, 100);
 
     bool playerFirst = true;
 
