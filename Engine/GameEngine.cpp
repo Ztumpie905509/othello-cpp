@@ -4,7 +4,8 @@
 #include <iostream>
 #include <mutex>
 #include <random>
-#include <string>
+#include <sstream>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -49,54 +50,53 @@ ContentType GameEngine::getPlayerSide() const { return this->playerSide_; }
 
 void GameEngine::printBoard() const
 {
-    std::cout << "\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
+    std::ostringstream oss;
+    oss << "\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
 
-    std::string x_axis = "X axis";
-    std::string y_axis = "Y axis";
-    std::string hori_indent = "       ";
+    std::string_view x_axis = "X axis";
+    std::string_view y_axis = "Y axis";
+    std::string_view hori_indent = "       ";
 
-    std::cout << "Current Board:\n";
-    std::cout << "\n";
-    std::cout << '\n';
+    oss << "Current Board:\n\n\n";
     for (int i = 0; i < 2 * BOARD_SIZE / 3; ++i)
     {
-        std::cout << " ";
+        oss << " ";
     }
-    std::cout << hori_indent << "  " << x_axis << '\n';
+    oss << hori_indent << "  " << x_axis << '\n';
 
-    std::cout << "  " << hori_indent;
+    oss << "  " << hori_indent;
     for (int i = 0; i < BOARD_SIZE; ++i)
     {
-        std::cout << i << " ";
+        oss << i << " ";
     }
-    std::cout << "\n";
+    oss << "\n";
 
     for (int y = BOARD_SIZE - 1; y >= 0; --y)
     {
         if (y == BOARD_SIZE / 2)
         {
-            std::cout << y_axis << " ";
+            oss << y_axis << " ";
         }
         else
         {
-            std::cout << "       ";
+            oss << "       ";
         }
-        std::cout << y << " ";
+        oss << y << " ";
         for (int x = 0; x < BOARD_SIZE; ++x)
         {
             char item = this->board_.getChar({x, y, ContentType::EMPTY});
 
-            std::vector<Position>::const_iterator flippedPos = std::find(this->flipped.begin(), this->flipped.end(), Position{x, y, ContentType::EMPTY});
+            auto flippedPos = std::find(this->flipped.begin(), this->flipped.end(), Position{x, y, ContentType::EMPTY});
             if (flippedPos != this->flipped.end())
             {
-                std::cout << printColor::YELLOW << item << printColor::RESET_COLOR << " ";
+                oss << printColor::YELLOW << item << printColor::RESET_COLOR << " ";
                 continue;
             }
 
-            std::vector<Position>::const_iterator validPos = std::find(this->valid.begin(), this->valid.end(), Position{x, y, ContentType::EMPTY});
+            auto validPos = std::find(this->valid.begin(), this->valid.end(), Position{x, y, ContentType::EMPTY});
             if (validPos != this->valid.end())
             {
-                std::cout << printColor::GREEN << '+' << printColor::RESET_COLOR << " ";
+                oss << printColor::GREEN << '+' << printColor::RESET_COLOR << " ";
                 continue;
             }
 
@@ -104,47 +104,48 @@ void GameEngine::printBoard() const
             {
                 if (item == Board::getChar(this->playerSide_))
                 {
-                    std::cout << printColor::BLUE;
+                    oss << printColor::BLUE;
                 }
                 else if (item == Board::getChar(this->oppoSide_))
                 {
-                    std::cout << printColor::RED;
+                    oss << printColor::RED;
                 }
-                std::cout << item << printColor::RESET_COLOR << " ";
+                oss << item << printColor::RESET_COLOR << " ";
             }
             else
-                std::cout << printColor::UNDER_YELLOW << item << printColor::RESET_COLOR << " ";
+            {
+                oss << printColor::UNDER_YELLOW << item << printColor::RESET_COLOR << " ";
+            }
         }
-        std::cout << y << " ";
+        oss << y << " ";
         if (y == BOARD_SIZE / 2)
         {
-            std::cout << y_axis << " ";
+            oss << y_axis << " ";
         }
-        std::cout << '\n';
+        oss << '\n';
     }
 
-    std::cout << "  " << hori_indent;
+    oss << "  " << hori_indent;
     for (int i = 0; i < BOARD_SIZE; ++i)
     {
-        std::cout << i << " ";
+        oss << i << " ";
     }
-    std::cout << '\n';
+    oss << '\n';
     for (int i = 0; i < 2 * BOARD_SIZE / 3; ++i)
     {
-        std::cout << " ";
+        oss << " ";
     }
-    std::cout << hori_indent << "  " << x_axis << '\n';
+    oss << hori_indent << "  " << x_axis << '\n';
 
     int yourPiece, oppoPiece;
-
     if (this->playerSide_ == ContentType::WHITE)
         this->board_.getNumberColor(yourPiece, oppoPiece);
     else
         this->board_.getNumberColor(oppoPiece, yourPiece);
 
-    std::cout << "\n"
-              << "Number of your piece: " << yourPiece << "\n"
-              << "Number of opponent's piece: " << oppoPiece << "\n";
+    oss << "\nNumber of your piece: " << yourPiece << "\nNumber of opponent's piece: " << oppoPiece << "\n";
+
+    std::cout << oss.str();
 }
 
 void GameEngine::printAdditionalInfo() const

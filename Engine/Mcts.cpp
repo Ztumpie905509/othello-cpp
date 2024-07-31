@@ -150,17 +150,23 @@ void MCTS::printWinProbabilities(std::unordered_map<Position, double, Position> 
 {
     std::lock_guard<std::mutex> lock(consoleMutex);
 
+#ifdef DEBUG
     std::cout << "Win probabilities for each available move:\n";
-    Position bestMove = {-1, -1, ContentType::EMPTY};
+#endif
 
+    Position bestMove = {-1, -1, ContentType::EMPTY};
     double bestWinRate = 0;
+
+    threadMoves.reserve(this->root_->children.size());
 
     for (Node *child : this->root_->children)
     {
         double winRate = static_cast<double>(child->wins) / child->visits;
+#ifdef DEBUG
         std::cout << "Move (" << child->move.x << ", " << child->move.y << "): " << winRate * 100 << "%\n";
+#endif
 
-        threadMoves.insert({child->move, winRate});
+        threadMoves.emplace(child->move, winRate);
 
         if (winRate >= bestWinRate)
         {
@@ -169,8 +175,10 @@ void MCTS::printWinProbabilities(std::unordered_map<Position, double, Position> 
         }
     }
 
-    std::cout << "Best move: (" << bestMove.x << ", " << bestMove.y << ") with a win rate of "
-              << bestWinRate * 100 << "%\n\n\n";
+#ifdef DEBUG
+    std::cout << "Best move: (" << bestMove.x << ", " << bestMove.y << ") with a win rate of " << bestWinRate * 100 << "%\n\n\n";
+#endif
+
     if (this->prev_rate != -1)
     {
         this->explore_constant -= (this->prev_rate - bestWinRate);

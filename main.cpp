@@ -4,10 +4,11 @@
 
 #include <iostream>
 #include <limits>
+#include <string_view>
 
 #include "Engine/GameEngine.h"
 
-char getUserInput(const std::string &message, const std::string &errorMessage, const std::string &prompt = "Your input: ")
+char getUserInput(const std::string_view &message, const std::string_view &errorMessage, const std::string_view &prompt = "Your input: ")
 {
     char input;
     std::cout << message << std::endl;
@@ -22,7 +23,7 @@ char getUserInput(const std::string &message, const std::string &errorMessage, c
     return input;
 }
 
-int getIntInput(const std::string &message, const std::string &errorMessage, int min, int max, const std::string &prompt = "Your input: ")
+int getIntInput(const std::string_view &message, const std::string_view &errorMessage, int min, int max, const std::string_view &prompt = "Your input: ")
 {
     int input;
     std::cout << message << std::endl;
