@@ -5,7 +5,7 @@ EXE = main
 DEBUGFLAGS = -g -DDEBUG
 
 ifneq ($(OS),Windows_NT)
-    DEBUGFLAGS += -fsanitize=address,undefined,leaks
+    DEBUGFLAGS += -fsanitize=address,undefined,leak
 endif
 
 
